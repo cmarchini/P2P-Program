@@ -3,11 +3,18 @@ public class Peer {
 	static int ports[] = { 6788, 6789 };
 	static int peerID = 1001;
 	
+	Client client;
+	
     public static void main( String[] args ) 
     {
-    	int serverPort = 6789;
+    	new Peer().start();
+    }
+    
+    public void start() {
+
+    	int serverPort = 6788;
     	
-    	Server newPeerServer = new Server(serverPort, peerID);
+    	Server newPeerServer = new Server(serverPort, peerID, this);
     	new Thread(newPeerServer).start();
     	
     	
@@ -32,4 +39,12 @@ public class Peer {
     	new Thread(newPeerClient).start();
     }*/
 
+    public void sendMessage() {
+    	client.sendMessage();
+    }
+    
+    public void parseMessage() {
+    	// call different methods inside Peer depending on message
+    }
+    
 }

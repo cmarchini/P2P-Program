@@ -10,10 +10,12 @@ public class Server implements Runnable
     int numConnections = 0;
     int port;
     int peerID;
+    Peer peer;
 	   
-	public Server(int port, int peerID) {
+	public Server(int port, int peerID, Peer peer) {
 	this.port = port;
 	this.peerID = peerID;
+	this.peer = peer;
 	}
 	
 	public void run()
