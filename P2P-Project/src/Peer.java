@@ -5,7 +5,7 @@ public class Peer {
 	
     public static void main( String[] args ) 
     {
-    	int serverPort = 6789;
+    	int serverPort = 6788;
     	
     	Server newPeerServer = new Server(serverPort, peerID);
     	new Thread(newPeerServer).start();

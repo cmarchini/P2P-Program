@@ -20,6 +20,8 @@ public class Client implements Runnable{
 	    Socket clientSocket = null;  
 	    DataOutputStream outputStream = null;
 	    BufferedReader inputStream = null;
+	    
+	    boolean connected = false;
 		
 		// Try to open a socket on the given port
 		// Try to open input and output streams
@@ -54,16 +56,22 @@ public class Client implements Runnable{
 		try {
 		    while ( true ) 
 		    {
-				System.out.print( "Enter a sentence (q to stop connection, q to stop server): " );
-				
-				
+		    	String sentence = "";
+		    	
 				//takes user input from command line
+				//System.out.print( "Enter a sentence (q to stop connection, q to stop server): " );
 				//BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 				//String sentence = br.readLine();
 				
-				String sentence = "HELLO" + "00000000000000000000000" + peerID;
-				
-				outputStream.writeBytes( sentence + "\n" );
+		    	if(!connected)
+		    	{
+					sentence = "HELLO" + "00000000000000000000000" + peerID;
+					
+					outputStream.writeBytes( sentence + "\n" );
+					
+					connected = true;
+		    	}
+
 		
 				if ( sentence.equalsIgnoreCase("q") ) 
 				{
