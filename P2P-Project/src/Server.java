@@ -1,19 +1,19 @@
 import java.io.*;
 import java.net.*;
 
-public class Server2 implements Runnable{
 
 
-    // declare a server socket and a client socket for the server;
-    // declare the number of connections
-
+public class Server implements Runnable
+{
     ServerSocket echoServer = null;
     Socket clientSocket = null;
     int numConnections = 0;
     int port;
+    int peerID;
 	   
-	public Server2(int port) {
+	public Server(int port, int peerID) {
 	this.port = port;
+	this.peerID = peerID;
 	}
 	
 	public void run()
@@ -49,7 +49,7 @@ public class Server2 implements Runnable{
 	    try {
 		clientSocket = echoServer.accept();
 		numConnections ++;
-		Server2Connection oneconnection = new Server2Connection(clientSocket, numConnections, this);
+		ServerConnection oneconnection = new ServerConnection(clientSocket, numConnections, this, peerID);
 		new Thread(oneconnection).start();
 	    }   
 	    catch (IOException e) {
@@ -59,17 +59,19 @@ public class Server2 implements Runnable{
     }
 }
 
-class Server2Connection implements Runnable {
+class ServerConnection implements Runnable {
     BufferedReader is;
     PrintStream os;
     Socket clientSocket;
     int id;
-    Server2 server;
+    Server server;
+    int peerID;
 
-    public Server2Connection(Socket clientSocket, int id, Server2 server) {
+    public ServerConnection(Socket clientSocket, int id, Server server, int peerID) {
 	this.clientSocket = clientSocket;
 	this.id = id;
 	this.server = server;
+	this.peerID = peerID;
 	System.out.println( "Connection " + id + " established with: " + clientSocket );
 	try {
 	    is = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -87,13 +89,16 @@ class Server2Connection implements Runnable {
             while (true) {
                 line = is.readLine();
 		System.out.println( "Received " + line + " from Connection " + id + "." );
-                int n = Integer.parseInt(line);
-		if ( n == -1 ) {
+		if ( line.equalsIgnoreCase("q") ) {
 		    serverStop = true;
 		    break;
 		}
-		if ( n == 0 ) break;
-                os.println("" + n*n ); 
+		if ( line.equalsIgnoreCase("u") ) break;
+		
+		
+                //os.println("" + line.toUpperCase()); 
+				os.println("HELLO" + "00000000000000000000000" + peerID);
+		
             }
 
 	    System.out.println( "Connection " + id + " closed." );
