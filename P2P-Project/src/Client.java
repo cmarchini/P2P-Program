@@ -95,4 +95,8 @@ public class Client implements Runnable{
 		    System.err.println("IOException:  " + e);
 		}
     }           
+    
+    public void sendMessage() {
+    	
+    }
 }
