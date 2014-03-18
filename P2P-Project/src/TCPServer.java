@@ -3,28 +3,28 @@ import java.net.*;
 
 class TCPServer { 
 
-  public static void main(String argv[]) throws Exception 
-    { 
-      String clientSentence; 
-      String capitalizedSentence; 
+	public static void main(String argv[]) throws Exception 
+	{ 
+		String clientSentence; 
+		String capitalizedSentence; 
 
-      ServerSocket welcomeSocket = new ServerSocket(6789); 
-  
-      while(true) 
-	  { 
-            Socket connectionSocket = welcomeSocket.accept(); 
+		ServerSocket welcomeSocket = new ServerSocket(6789); 
 
-           BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream())); 
+		while(true) 
+		{ 
+			Socket connectionSocket = welcomeSocket.accept(); 
 
-		   DataOutputStream  outToClient = new DataOutputStream(connectionSocket.getOutputStream()); 
+			BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream())); 
 
-           clientSentence = inFromClient.readLine(); 
+			DataOutputStream  outToClient = new DataOutputStream(connectionSocket.getOutputStream()); 
 
-           capitalizedSentence = clientSentence.toUpperCase() + '\n'; 
+			clientSentence = inFromClient.readLine(); 
 
-           outToClient.writeBytes(capitalizedSentence); 
-	  } 
-    } 
+			capitalizedSentence = clientSentence.toUpperCase() + '\n'; 
+
+			outToClient.writeBytes(capitalizedSentence); 
+		} 
+	} 
 } 
 
 /**
