@@ -1,3 +1,4 @@
+package peer;
 import java.io.*;
 import java.net.*;
 
@@ -7,6 +8,12 @@ public class Client implements Runnable
 	private int port;
 	private int peerID; 
 
+
+
+	Socket clientSocket = null;  
+	DataOutputStream outputStream = null;
+	BufferedReader inputStream = null;
+	
 	public Client(int port, int peerID)
 	{
 		this.port = port;
@@ -18,10 +25,6 @@ public class Client implements Runnable
 
 		String hostname = "localhost";
 		boolean tryToConnect = true;
-
-		Socket clientSocket = null;  
-		DataOutputStream outputStream = null;
-		BufferedReader inputStream = null;
 
 		boolean connected = false;
 
@@ -56,41 +59,16 @@ public class Client implements Runnable
 		}
 
 		try {
+			sendMessage(peerID, new HandshakeMessage(peerID));
+						
 			while ( true ) 
 			{
-				String sentence = "";
-
-				//takes user input from command line
-				//System.out.print( "Enter a sentence (q to stop connection, q to stop server): " );
-				//BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-				//String sentence = br.readLine();
-
-				if(!connected)
-				{
-					sentence = "HELLO" + "00000000000000000000000" + peerID;
-
-					outputStream.writeBytes( sentence + "\n" );
-
-					connected = true;
-				}
-
-
-				if ( sentence.equalsIgnoreCase("q") ) 
-				{
-					break;
-				}
 
 				String modifiedSentence = inputStream.readLine();
 				System.out.println("FROM SERVER: " + modifiedSentence);
 			}
 
-			// close the output stream
-			// close the input stream
-			// close the socket
 
-			outputStream.close();
-			inputStream.close();
-			clientSocket.close();   
 		} catch (UnknownHostException e) {
 			System.err.println("Trying to connect to unknown host: " + e);
 		} catch (IOException e) {
@@ -98,19 +76,42 @@ public class Client implements Runnable
 		}
 	}           
 
+	/**TODO:
+	 * 
+	 * This message function
+	 * takes a peerID and a
+	 * Message and sends the
+	 * message to the given
+	 * peer.  It must parse 
+	 * the message first.
+	 */
 	public void sendMessage(int peerID, Message msg) {
-		/*TODO:
-		 * 
-		 * This message function
-		 * takes a peerID and a
-		 * Message and sends the
-		 * message to the given
-		 * peer.  It must parse 
-		 * the message first.
-		 */
-
+		String sentence = msg.getMessageString();
+		
+		try {
+			outputStream.writeBytes(sentence + "\n");
+		} catch (IOException e) {
+			System.out.println("IOEXCEPTION!!!!!!!!!!!!!!!!!!!!!!!");
+			e.printStackTrace();
+		}
 	}
+	
+	public void closeConnection() {
+		// close the output stream
+		// close the input stream
+		// close the socket
+
+		try {
+			outputStream.close();
+			inputStream.close();
+			clientSocket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}   
+	}
+	
 }
+	
 
 /**
  * @author Chris

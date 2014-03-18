@@ -1,8 +1,9 @@
+package peer;
 /**
  * 
  */
 
-public class Message {
+public class NormalMessage implements Message {
 	
 	private int length;
 	private int type;
@@ -10,7 +11,7 @@ public class Message {
 	/**
 	 * 
 	 */
-	public Message(int length, int type, String payload) {
+	public NormalMessage(int length, int type, String payload) {
 		// The message class constructs
 		// a normal message which is 
 		// passed between peers

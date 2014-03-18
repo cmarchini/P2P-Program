@@ -1,3 +1,4 @@
+package peer;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.Scanner;
@@ -39,7 +40,7 @@ public class Peer {
 
 		System.out.println(generateBitField());
 		String payload = generateBitField();
-		Message bitfieldMsg = new Message(10, 5, payload);
+		NormalMessage bitfieldMsg = new NormalMessage(10, 5, payload);
 
 		System.out.println("Payload: " + bitfieldMsg.getPayload());
 		System.out.println("Length: " + bitfieldMsg.getLength());
