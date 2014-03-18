@@ -6,15 +6,32 @@ public class Peer {
 	Client client;
 	int peerID;
 
+	int serverPort;
+
 	public static void main( String[] args ) 
 	{
+		if (args.length >= 1) try {
+			int serverPortArg = Integer.parseInt(args[0]);
+			new Peer(serverPortArg).start(); // start with integer port specified in first argument
+			return;
+		} catch (NumberFormatException e) {
+			
+		}
+		
+		// if we got to this point a legal port was not specified
 		new Peer().start();
-
 	}
 
+	public Peer(int serverPort) {
+		this.serverPort = serverPort;
+	}
+	
+	public Peer() {
+		this.serverPort = 6788;
+	}
+	
 	public void start() {
 
-		int serverPort = 6009;
 		peerID = 1001;
 
 		Server newPeerServer = new Server(serverPort, peerID, this);
