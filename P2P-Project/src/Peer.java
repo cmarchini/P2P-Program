@@ -14,15 +14,15 @@ public class Peer {
     
     public void start() {
 
-    	int serverPort = 6009;
-    	peerID = 1002;
+    	int serverPort = 6008;
+    	peerID = 1001;
     	
     	Server newPeerServer = new Server(serverPort, peerID, this);
     	new Thread(newPeerServer).start();
     	
     	System.out.println(generateBitField());
     	String payload = generateBitField();
-    	Message bitfieldMsg = new Message(10, 5, payload);
+    	Message bitfieldMsg = new Message(10,5,payload);
     	
     	System.out.println("Payload: " + bitfieldMsg.getPayload());
     	System.out.println("Length: " + bitfieldMsg.getLength());
