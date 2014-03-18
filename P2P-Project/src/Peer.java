@@ -27,7 +27,7 @@ public class Peer {
 	}
 	
 	public Peer() {
-		this.serverPort = 6788;
+		this.serverPort = 6009;
 	}
 	
 	public void start() {
