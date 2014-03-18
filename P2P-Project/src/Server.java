@@ -22,6 +22,13 @@ public class Server implements Runnable
 	{
 		startServer();
 	}
+	
+	/*public void handshake(int port)
+    {
+    	Client newPeerClient = new Client(port);
+    	
+    	new Thread(newPeerClient).start();
+    }*/
 
     public void stopServer() {
 	System.out.println( "Server cleaning up." );
@@ -114,3 +121,22 @@ class ServerConnection implements Runnable {
 	}
     }
 }
+
+/**
+ * @author Chris
+ * "
+ * Quantity 
+ * does 
+ * not 
+ * equal 
+ * quality.
+ * "
+ * 
+ * So
+ * Said
+ * Abraham 
+ * Lincoln
+ * 1863
+ * Gettysburg
+ * PA
+ */

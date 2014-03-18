@@ -1,12 +1,14 @@
 import java.io.*;
 import java.net.*;
 
-public class Client implements Runnable{
+public class Client implements Runnable
+{
 	
 	private int port;
 	private int peerID; 
 	
-	public Client(int port, int peerID){
+	public Client(int port, int peerID)
+	{
 		this.port = port;
 		this.peerID = peerID;
 	}
@@ -96,7 +98,35 @@ public class Client implements Runnable{
 		}
     }           
     
-    public void sendMessage() {
+    public void sendMessage(int peerID, Message msg) {
+    	/*TODO:
+    	 * 
+    	 * This message function
+    	 * takes a peerID and a
+    	 * Message and sends the
+    	 * message to the given
+    	 * peer.  It must parse 
+    	 * the message first.
+    	 */
     	
     }
 }
+
+/**
+ * @author Chris
+ * "
+ * Quantity 
+ * does 
+ * not 
+ * equal 
+ * quality.
+ * "
+ * 
+ * So
+ * Said
+ * Abraham 
+ * Lincoln
+ * 1863
+ * Gettysburg
+ * PA
+ */
