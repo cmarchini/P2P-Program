@@ -6,3 +6,13 @@
 /TCPServer.class
 /Server.class
 /ServerConnection.class
+/PeerInfo.cfg
+/Message.class
+/LoggerUtil.class
+/Node$PeerHandler.class
+/Node$StabilizerRunner.class
+/Node.class
+/peerbase
+/BitfieldMessage.class
+/NormalMessage.class
+/HelloMessage.class
