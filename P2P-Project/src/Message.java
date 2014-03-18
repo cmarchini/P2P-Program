@@ -2,24 +2,6 @@
  * 
  */
 
-/**
- * @author Chris
- * "
- * Quantity 
- * does 
- * not 
- * equal 
- * quality.
- * "
- * 
- * So
- * Said
- * Abraham 
- * Lincoln
- * 1863
- * Gettysburg
- * PA
- */
 public class Message {
 	
 	private int length;
