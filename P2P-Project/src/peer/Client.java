@@ -7,17 +7,18 @@ public class Client implements Runnable
 
 	private int port;
 	private int peerID; 
-
+	private Mailbox mail;
 
 
 	Socket clientSocket = null;  
 	DataOutputStream outputStream = null;
 	BufferedReader inputStream = null;
 	
-	public Client(int port, int peerID)
+	public Client(int port, int peerID, Mailbox mail)
 	{
 		this.port = port;
 		this.peerID = peerID;
+		this.mail = mail;
 	}
 
 	public void run ()
@@ -63,7 +64,11 @@ public class Client implements Runnable
 						
 			while ( true ) 
 			{
-
+				Message m = mail.getNextMessage(peerID);
+				if(m != null){
+					sendMessage(peerID, m);
+				}
+				
 				String modifiedSentence = inputStream.readLine();
 				System.out.println("FROM SERVER: " + modifiedSentence);
 			}

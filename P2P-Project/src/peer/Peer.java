@@ -28,12 +28,12 @@ public class Peer {
 	}
 	
 	public Peer() {
-		this.serverPort = 6009;
+		this.serverPort = 6010;
 	}
 	
 	public void start() {
 
-		peerID = 1001;
+		peerID = 1003;
 
 		Server newPeerServer = new Server(serverPort, peerID, this);
 		new Thread(newPeerServer).start();
@@ -50,16 +50,22 @@ public class Peer {
 		//have peer's clients connect to other peers' servers
 		try 
 		{
+			Mailbox mail = new Mailbox();
+			
 			Scanner in = new Scanner(new FileReader("PeerInfo.cfg"));
 
 			while(in.hasNext())
 			{
-				in.next();
+				int inPeerID = in.nextInt();
 				in.next();
 				int clientPort = in.nextInt();
 				if(serverPort != clientPort)
 				{
-					Client newPeerClient = new Client(clientPort, peerID);
+					mail.addMailbox(inPeerID);
+					mail.placeMessage(inPeerID, new NormalMessage(60, 1, "This is a test"));
+					
+					
+					Client newPeerClient = new Client(clientPort, inPeerID, mail);
 					new Thread(newPeerClient).start();
 				}
 				in.next();
@@ -106,13 +112,6 @@ public class Peer {
 
 		return bitfield;
 	}
-
-	/*public void handshake(int port)
-    {
-    	Client newPeerClient = new Client(port);
-
-    	new Thread(newPeerClient).start();
-    }*/
 
 	public void sendMessage(int peerID, Message msg) 
 	{
