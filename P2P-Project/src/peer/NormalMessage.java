@@ -1,4 +1,9 @@
 package peer;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
 /**
  * 
  */
@@ -7,11 +12,11 @@ public class NormalMessage implements Message {
 	
 	private int length;
 	private int type;
-	private String payload;
+	private byte[] payload;
 	/**
 	 * 
 	 */
-	public NormalMessage(int length, int type, String payload) {
+	public NormalMessage(int length, int type, byte[] payload) {
 		// The message class constructs
 		// a normal message which is 
 		// passed between peers
@@ -42,6 +47,11 @@ public class NormalMessage implements Message {
 		
 	}
 	
+	public void writeTo(DataOutputStream os) throws IOException {
+			os.writeInt(length);
+			os.writeByte(type);
+			os.write(payload);
+	}
 	/**
 	 * @return the length
 	 */
@@ -69,13 +79,13 @@ public class NormalMessage implements Message {
 	/**
 	 * @return the payload
 	 */
-	public String getPayload() {
+	public byte[] getPayload() {
 		return payload;
 	}
 	/**
 	 * @param payload the payload to set
 	 */
-	public void setPayload(String payload) {
+	public void setPayload(byte[] payload) {
 		this.payload = payload;
 	}
 

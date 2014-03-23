@@ -60,7 +60,7 @@ public class Client implements Runnable
 		}
 
 		try {
-			sendMessage(peerID, new HandshakeMessage(peerID));
+			sendMessage(peerID, new HandshakeMessage(peerID)); // sending to self: this line no longer necessary
 						
 			while ( true ) 
 			{
@@ -91,10 +91,11 @@ public class Client implements Runnable
 	 * the message first.
 	 */
 	public void sendMessage(int peerID, Message msg) {
-		String sentence = msg.getMessageString();
+		//String sentence = msg.getMessageString();
 		
 		try {
-			outputStream.writeBytes(sentence + "\n");
+			//outputStream.writeBytes(sentence + "\n");
+			msg.writeTo(outputStream);
 		} catch (IOException e) {
 			System.out.println("IOEXCEPTION!!!!!!!!!!!!!!!!!!!!!!!");
 			e.printStackTrace();

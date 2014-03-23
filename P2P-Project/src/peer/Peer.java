@@ -1,10 +1,14 @@
 package peer;
 import java.io.*;
 import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Peer {
-	Client client;
+	Map<Integer, Client> clients = new HashMap<Integer, Client>();
 	int peerID;
 
 	int serverPort;
@@ -28,7 +32,7 @@ public class Peer {
 	}
 	
 	public Peer() {
-		this.serverPort = 6010;
+		this.serverPort = 6008;
 	}
 	
 	public void start() {
@@ -39,7 +43,7 @@ public class Peer {
 		new Thread(newPeerServer).start();
 
 		System.out.println(generateBitField());
-		String payload = generateBitField();
+		byte[] payload = generateBitField();
 		NormalMessage bitfieldMsg = new NormalMessage(10, 5, payload);
 
 		System.out.println("Payload: " + bitfieldMsg.getPayload());
@@ -62,11 +66,13 @@ public class Peer {
 				if(serverPort != clientPort)
 				{
 					mail.addMailbox(inPeerID);
-					mail.placeMessage(inPeerID, new NormalMessage(60, 1, "This is a test"));
+					mail.placeMessage(inPeerID, new NormalMessage(60, 1, "This is a test".getBytes()));
 					
 					
 					Client newPeerClient = new Client(clientPort, inPeerID, mail);
+					clients.put(inPeerID, newPeerClient);
 					new Thread(newPeerClient).start();
+					//sendMessage(inPeerID, new HandshakeMessage(peerID));
 				}
 				in.next();
 			}
@@ -80,9 +86,10 @@ public class Peer {
 
 	}
 
-	public String generateBitField()
+	public byte[] generateBitField()
 	{
-		String bitfield = "";
+		byte[] bitfield = {};
+		String bitfieldString = "";
 
 		try 
 		{
@@ -93,18 +100,19 @@ public class Peer {
 			{
 				if(!in.next().equals("0"))
 				{
-					bitfield += "1";
+					bitfieldString += "1";
 				}
 				else
 				{
-					bitfield += "0";
+					bitfieldString += "0";
 				}
 				i++;
 
 			}
 
+			bitfield = bitfieldString.getBytes("US-ASCII");
 		} 
-		catch (FileNotFoundException e) 
+		catch (Exception e) 
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -115,11 +123,13 @@ public class Peer {
 
 	public void sendMessage(int peerID, Message msg) 
 	{
-		client.sendMessage(peerID, msg);
+		System.out.println("Sending to " + peerID + ":" + clients.get(peerID));
+		clients.get(peerID).sendMessage(peerID, msg);
 	}
 
-	public void parseMessage() 
+	public void processMessage(Message msg)
 	{
+    System.out.println( "Received message!" );
 		// call different methods inside Peer depending on message
 	}
 

@@ -1,5 +1,9 @@
 package peer;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
 public class HandshakeMessage implements Message {
 
 	int peerID;
@@ -23,6 +27,15 @@ public class HandshakeMessage implements Message {
 		
 		return"HELLO" + "00000000000000000000000" + peerID;
 
+	}
+	
+	public void writeTo(DataOutputStream os) throws IOException {
+		try {
+			os.write("HELLO\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0".getBytes("US-ASCII"));
+			os.writeInt(peerID);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**

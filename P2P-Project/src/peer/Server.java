@@ -59,7 +59,7 @@ public class Server implements Runnable
 			try {
 				clientSocket = echoServer.accept();
 				numConnections ++;
-				ServerConnection oneconnection = new ServerConnection(clientSocket, numConnections, this, peerID);
+				ServerConnection oneconnection = new ServerConnection(clientSocket, numConnections, this, peerID, peer);
 				new Thread(oneconnection).start();
 			}   
 			catch (IOException e) {
@@ -70,21 +70,26 @@ public class Server implements Runnable
 }
 
 class ServerConnection implements Runnable {
-	BufferedReader is;
+	//BufferedReader is; // don't need
 	PrintStream os;
 	Socket clientSocket;
 	int id;
 	Server server;
 	int peerID;
+	Peer peer;
+	
+  DataInputStream dis;
 
-	public ServerConnection(Socket clientSocket, int id, Server server, int peerID) {
+	public ServerConnection(Socket clientSocket, int id, Server server, int peerID, Peer peer) {
 		this.clientSocket = clientSocket;
 		this.id = id;
 		this.server = server;
 		this.peerID = peerID;
+		this.peer = peer;
 		System.out.println( "Connection " + id + " established with: " + clientSocket );
 		try {
-			is = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			// is = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			dis = new DataInputStream(clientSocket.getInputStream());
 			os = new PrintStream(clientSocket.getOutputStream());
 		} catch (IOException e) {
 			System.out.println(e);
@@ -97,29 +102,62 @@ class ServerConnection implements Runnable {
 			boolean serverStop = false;
 
 			while (true) {
-				line = is.readLine();
-				System.out.println( "Received " + line + " from Connection " + id + "." );
-				if ( line.equalsIgnoreCase("q") ) {
-					serverStop = true;
-					break;
-				}
-				if ( line.equalsIgnoreCase("u") ) break;
+				Message msg = parseInput();
+				peer.processMessage(msg); // TODO
+//				if ( line.equalsIgnoreCase("q") ) {
+//					serverStop = true;
+//					break;
+//				}
+//				if ( line.equalsIgnoreCase("u") ) break;
 
 
 				//os.println("" + line.toUpperCase()); 
-				os.println("HELLO" + "00000000000000000000000" + peerID);
+				peer.sendMessage(peerID, new HandshakeMessage(peerID));
 
 			}
 
+			// TODO figure out later
+			/*
 			System.out.println( "Connection " + id + " closed." );
-			is.close();
+			dis.close();
 			os.close();
 			clientSocket.close();
 
 			if ( serverStop ) server.stopServer();
+			*/
 		} catch (IOException e) {
 			System.out.println(e);
 		}
+	}
+	
+	private Message parseInput() throws IOException {
+		Message m = null;
+		
+    int len = dis.readInt();
+    byte type = dis.readByte();
+    
+    if (type == 'O') {
+      for (int i=0; i<23; i++) {
+      	dis.readByte();
+      }
+      
+      int peerID = dis.readInt();
+      
+      m = new HandshakeMessage(peerID);
+    } else {
+      byte[] data = new byte[len];
+      if (len > 0) {
+          dis.readFully(data);
+      }
+      
+      m = new NormalMessage(len, type, data);
+    }
+    
+    System.out.println( "Received message of length " + len + " and type " + type + " from Connection " + id + "." );
+    
+    return m;
+		
+		//line = is.readLine();
 	}
 }
 
