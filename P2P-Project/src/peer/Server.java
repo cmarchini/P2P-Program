@@ -10,12 +10,12 @@ public class Server implements Runnable
 	Socket clientSocket = null;
 	int numConnections = 0;
 	int port;
-	int peerID;
+	int myPeerID;
 	Peer peer;
 
 	public Server(int port, int peerID, Peer peer) {
 		this.port = port;
-		this.peerID = peerID;
+		this.myPeerID = peerID;
 		this.peer = peer;
 	}
 
@@ -48,9 +48,7 @@ public class Server implements Runnable
 			System.out.println(e);
 		}   
 
-		System.out.println( "Server is started and is waiting for connections." );
-		System.out.println( "With multi-threading, multiple connections are allowed." );
-		System.out.println( "Any client can send -1 to stop the server." );
+		System.out.println( "The Server of peer " + myPeerID + " has started and is waiting for connections." );
 
 		// Whenever a connection is received, start a new thread to process the connection
 		// and wait for the next connection.
@@ -59,7 +57,7 @@ public class Server implements Runnable
 			try {
 				clientSocket = echoServer.accept();
 				numConnections ++;
-				ServerConnection oneconnection = new ServerConnection(clientSocket, numConnections, this, peerID, peer);
+				ServerConnection oneconnection = new ServerConnection(clientSocket, numConnections, this, myPeerID, peer);
 				new Thread(oneconnection).start();
 			}   
 			catch (IOException e) {
@@ -75,7 +73,8 @@ class ServerConnection implements Runnable {
 	Socket clientSocket;
 	int id;
 	Server server;
-	int peerID;
+	int myPeerID;
+	int neighborPeerID;
 	Peer peer;
 	
   DataInputStream dis;
@@ -84,9 +83,9 @@ class ServerConnection implements Runnable {
 		this.clientSocket = clientSocket;
 		this.id = id;
 		this.server = server;
-		this.peerID = peerID;
+		this.myPeerID = peerID;
 		this.peer = peer;
-		System.out.println( "Connection " + id + " established with: " + clientSocket );
+		System.out.println( "I am Peer " + myPeerID + " and a new client has just connected to my server.  Connection " + id + " established with: " + clientSocket );
 		try {
 			// is = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			dis = new DataInputStream(clientSocket.getInputStream());
@@ -102,8 +101,8 @@ class ServerConnection implements Runnable {
 			boolean serverStop = false;
 
 			while (true) {
-				Message msg = parseInput();
-				peer.processMessage(msg); // TODO
+				parseInput();
+				//peer.processMessage(msg); // TODO
 //				if ( line.equalsIgnoreCase("q") ) {
 //					serverStop = true;
 //					break;
@@ -112,7 +111,7 @@ class ServerConnection implements Runnable {
 
 
 				//os.println("" + line.toUpperCase()); 
-				peer.sendMessage(peerID, new HandshakeMessage(peerID));
+				//peer.sendMessage(myPeerID, new HandshakeMessage(myPeerID));
 
 			}
 
@@ -136,24 +135,30 @@ class ServerConnection implements Runnable {
     int len = dis.readInt();
     byte type = dis.readByte();
     
-    if (type == 'O') {
+    if (type == 'O') 
+    {
       for (int i=0; i<23; i++) {
       	dis.readByte();
       }
       
-      int peerID = dis.readInt();
+      neighborPeerID = dis.readInt();
+
+      HandshakeMessage handshake = new HandshakeMessage(neighborPeerID);
       
-      m = new HandshakeMessage(peerID);
-    } else {
+      System.out.println( "I am the server of Peer " + myPeerID + " and I just received the following message: " + handshake.getMessageString());
+      
+      peer.receivedhandshake(handshake);
+    } 
+    else 
+    {
       byte[] data = new byte[len];
-      if (len > 0) {
-          dis.readFully(data);
-      }
-      
+      dis.read(data);
+  
       m = new NormalMessage(len, type, data);
+      System.out.println( "I am the server of Peer " + myPeerID + " and I just received the following message from Peer " + neighborPeerID + ": " + m.getMessageString());
+      System.out.println( "I have decoded the message as follows: length " + len + " and type " + type + " and data: " + data );
+
     }
-    
-    System.out.println( "Received message of length " + len + " and type " + type + " from Connection " + id + "." );
     
     return m;
 		

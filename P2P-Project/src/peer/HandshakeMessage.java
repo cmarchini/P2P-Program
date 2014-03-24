@@ -6,7 +6,7 @@ import java.io.UnsupportedEncodingException;
 
 public class HandshakeMessage implements Message {
 
-	int peerID;
+	int myPeerID;
 	
 	/**
 	 * 
@@ -17,22 +17,13 @@ public class HandshakeMessage implements Message {
 	
 	public String getMessageString()
 	{
-		// This function returns 
-		// the byte string representing
-		// the message to be passed into
-		// the TCP connection.  
-		
-		// TODO: convert to actual bytes
-		// instead of using a string
-		
-		return"HELLO" + "00000000000000000000000" + peerID;
-
+		return "HELLO\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" + myPeerID;
 	}
 	
 	public void writeTo(DataOutputStream os) throws IOException {
 		try {
 			os.write("HELLO\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0".getBytes("US-ASCII"));
-			os.writeInt(peerID);
+			os.writeInt(myPeerID);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
@@ -42,13 +33,13 @@ public class HandshakeMessage implements Message {
 	 * @return peerID
 	 */
 	public int getPeerID() {
-		return peerID;
+		return myPeerID;
 	}
 	/**
 	 * @param peerID
 	 */
 	public void setPeerID(int peerID) {
-		this.peerID = peerID;
+		this.myPeerID = peerID;
 	}
 	
 }

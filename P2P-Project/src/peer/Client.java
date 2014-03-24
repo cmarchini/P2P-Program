@@ -6,19 +6,25 @@ public class Client implements Runnable
 {
 
 	private int port;
-	private int peerID; 
+	private int myPeerID;
+	private int neighborPeerID; 
 	private Mailbox mail;
+	Peer peer;
+	
+	private int handshake = 0; 			//When this variable equals 2, the handshake is complete
 
 
 	Socket clientSocket = null;  
 	DataOutputStream outputStream = null;
 	BufferedReader inputStream = null;
 	
-	public Client(int port, int peerID, Mailbox mail)
+	public Client(int port, int myPeerID, int neighborPeerID, Peer peer)
 	{
 		this.port = port;
-		this.peerID = peerID;
-		this.mail = mail;
+		this.myPeerID = myPeerID;
+		this.neighborPeerID = neighborPeerID;
+		this.peer = peer;
+		//this.mail = mail;
 	}
 
 	public void run ()
@@ -59,10 +65,12 @@ public class Client implements Runnable
 			}
 		}
 
-		try {
-			sendMessage(peerID, new HandshakeMessage(peerID)); // sending to self: this line no longer necessary
+		//try {
+			sendMessage(new HandshakeMessage(myPeerID)); // send a handshake to my peer.  Attach my peerID so the peer knows who I am.
+			handshake();
+			//closeConnection();
 						
-			while ( true ) 
+			/*while ( true ) 
 			{
 				Message m = mail.getNextMessage(peerID);
 				if(m != null){
@@ -71,33 +79,54 @@ public class Client implements Runnable
 				
 				String modifiedSentence = inputStream.readLine();
 				System.out.println("FROM SERVER: " + modifiedSentence);
-			}
+			}*/
 
 
-		} catch (UnknownHostException e) {
+			/*} catch (UnknownHostException e) {
 			System.err.println("Trying to connect to unknown host: " + e);
 		} catch (IOException e) {
 			System.err.println("IOException:  " + e);
-		}
+		}*/
 	}           
 
-	/**TODO:
-	 * 
-	 * This message function
-	 * takes a peerID and a
-	 * Message and sends the
-	 * message to the given
-	 * peer.  It must parse 
-	 * the message first.
-	 */
-	public void sendMessage(int peerID, Message msg) {
-		//String sentence = msg.getMessageString();
+	//Keep track of the number of handshakes
+	public boolean handshakeComplete()
+	{
+		if(handshake < 2)
+		{
+			return false;
+		}
+		else if(handshake == 2)
+		{
+			return true;
+		}
+		else
+		{
+			System.err.println("I am a client of Peer " + myPeerID + " and it seems that more than 2 handshakes have been exchanged");
+			return true;
+		}
+	}
+	//Increment handshakes.  If the hanshake is complete, tell peer that I am ready to send a bitfield message
+	public void handshake()
+	{
+		handshake++;
 		
-		try {
-			//outputStream.writeBytes(sentence + "\n");
+		if(handshakeComplete())
+		{
+			System.out.println("I am a client of Peer " + myPeerID + ".  The handshake with Peer " + neighborPeerID + " has been completed");
+			peer.sendBitfieldMessage(neighborPeerID);
+		}
+	}
+	
+	public void sendMessage(Message msg) {	
+		try 
+		{
+			System.out.println("I am a client of Peer " + myPeerID + " and I am sending the following message to the server of Peer " + neighborPeerID + ": " + msg.getMessageString());
 			msg.writeTo(outputStream);
-		} catch (IOException e) {
-			System.out.println("IOEXCEPTION!!!!!!!!!!!!!!!!!!!!!!!");
+		} 
+		catch (IOException e) 
+		{
+			System.out.println("IOEXCEPTION!  There might be a problem with the client sending a message to the server ");
 			e.printStackTrace();
 		}
 	}

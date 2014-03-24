@@ -43,7 +43,7 @@ public class NormalMessage implements Message {
 		// TODO: convert to actual bytes
 		// instead of using a string
 		
-		return "" + length + "" + type + payload;
+		return length + "" + type + payload;
 		
 	}
 	

@@ -32,31 +32,17 @@ public class Peer {
 	}
 	
 	public Peer() {
-		this.serverPort = 6008;
+		this.serverPort = 6010;
 	}
 	
 	public void start() {
 
 		peerID = 1003;
-
-		Server newPeerServer = new Server(serverPort, peerID, this);
-		new Thread(newPeerServer).start();
-
-		System.out.println(generateBitField());
-		byte[] payload = generateBitField();
-		NormalMessage bitfieldMsg = new NormalMessage(10, 5, payload);
-
-		System.out.println("Payload: " + bitfieldMsg.getPayload());
-		System.out.println("Length: " + bitfieldMsg.getLength());
-		System.out.println("Type: " + bitfieldMsg.getType());
-		System.out.println("MessageString: " + bitfieldMsg.getMessageString());
-
+		
 		//have peer's clients connect to other peers' servers
 		try 
 		{
-			Mailbox mail = new Mailbox();
-			
-			Scanner in = new Scanner(new FileReader("PeerInfo.cfg"));
+				Scanner in = new Scanner(new FileReader("PeerInfo.cfg"));
 
 			while(in.hasNext())
 			{
@@ -65,14 +51,10 @@ public class Peer {
 				int clientPort = in.nextInt();
 				if(serverPort != clientPort)
 				{
-					mail.addMailbox(inPeerID);
-					mail.placeMessage(inPeerID, new NormalMessage(60, 1, "This is a test".getBytes()));
-					
-					
-					Client newPeerClient = new Client(clientPort, inPeerID, mail);
+					Client newPeerClient = new Client(clientPort, peerID, inPeerID, this);
+					new Thread(newPeerClient).start();										
+
 					clients.put(inPeerID, newPeerClient);
-					new Thread(newPeerClient).start();
-					//sendMessage(inPeerID, new HandshakeMessage(peerID));
 				}
 				in.next();
 			}
@@ -84,9 +66,23 @@ public class Peer {
 			e.printStackTrace();
 		}
 
+		//turn on peer's server
+		Server newPeerServer = new Server(serverPort, peerID, this);
+		new Thread(newPeerServer).start();
 	}
 
-	public byte[] generateBitField()
+	public void receivedhandshake(HandshakeMessage msg)
+	{
+		//If Peer A sends a handshake message to me, then I will tell my client that is associated with Peer A that we received a handshake from Peer A
+		clients.get(msg.getPeerID()).handshake();
+	}
+	
+	public void sendBitfieldMessage(int neighborPeerID)
+	{
+		byte[] bitfield = generateBitfield();
+		clients.get(neighborPeerID).sendMessage(new NormalMessage(bitfield.length,5,bitfield));
+	}	
+	public byte[] generateBitfield()
 	{
 		byte[] bitfield = {};
 		String bitfieldString = "";
@@ -121,16 +117,14 @@ public class Peer {
 		return bitfield;
 	}
 
-	public void sendMessage(int peerID, Message msg) 
+	public void sendMessage(int neighborPeerID, Message msg) 
 	{
-		System.out.println("Sending to " + peerID + ":" + clients.get(peerID));
-		clients.get(peerID).sendMessage(peerID, msg);
+
 	}
 
 	public void processMessage(Message msg)
 	{
-    System.out.println( "Received message!" );
-		// call different methods inside Peer depending on message
+
 	}
 
 }
