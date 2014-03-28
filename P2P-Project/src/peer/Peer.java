@@ -10,6 +10,7 @@ import java.util.Scanner;
 public class Peer {
 	Map<Integer, Client> clients = new HashMap<Integer, Client>();
 	int peerID;
+	int pieces = 164;
 
 	int serverPort;
 
@@ -89,12 +90,10 @@ public class Peer {
 
 		try 
 		{
-			Scanner in = new Scanner(new FileReader("peer_" + peerID + "/Alphabet.txt"));
-			int i=0;
-
-			while(in.hasNext())
+			for(int i = 1; i <= pieces; i++)
 			{
-				if(!in.next().equals("0"))
+				File f = new File("peer_" + peerID + "/output_" + i + ".dat");
+				if(f.exists() && !f.isDirectory())
 				{
 					bitfieldString += "1";
 				}
@@ -102,10 +101,8 @@ public class Peer {
 				{
 					bitfieldString += "0";
 				}
-				i++;
-
 			}
-
+			
 			bitfield = bitfieldString.getBytes("US-ASCII");
 		} 
 		catch (Exception e) 

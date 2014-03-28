@@ -155,9 +155,7 @@ class ServerConnection implements Runnable {
       dis.read(data);
   
       m = new NormalMessage(len, type, data);
-      System.out.println( "I am the server of Peer " + myPeerID + " and I just received the following message from Peer " + neighborPeerID + ": " + m.getMessageString());
-      System.out.println( "I have decoded the message as follows: length " + len + " and type " + type + " and data: " + data );
-
+      System.out.println( "I am the server of Peer " + myPeerID + " and I just received the following message from Peer " + neighborPeerID + ": " + m.getMessageString() + " (length " + len + " and type " + type + " and data: " + new String(data) + ")");
     }
     
     return m;
