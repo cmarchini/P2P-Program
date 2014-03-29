@@ -256,9 +256,4 @@ public class Peer {
 
 	}
 
-	public void processMessage(Message msg)
-	{
-
-	}
-
 }
