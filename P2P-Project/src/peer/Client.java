@@ -150,9 +150,9 @@ public class Client implements Runnable
 		byte[] bitfield = peer.generateBitfield();
 		sendMessage(new NormalMessage(bitfield.length + 1,5,bitfield));
 	}
-	public void sendRequest()
+	public void sendRequest(byte[] pieceIndex)
 	{
-		sendMessage(new NormalMessage(1,6));
+		sendMessage(new NormalMessage(pieceIndex.length,6,pieceIndex));
 	}
 	public void sendPiece()
 	{

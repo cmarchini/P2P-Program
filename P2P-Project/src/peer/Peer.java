@@ -96,13 +96,14 @@ public class Peer {
 	
 	//logic to handle a normal message received from another peer
 	public void receiveNormalMessage(int neighborPeerID, NormalMessage m){
-		if(m.getType() == 0)			//choke
+		if(m.getType() == 0)			//received choke:
 		{
-			//TODO: choke
+			System.out.println("I am Peer " + peerID + " and I just received an Choke message from Peer " + neighborPeerID);
 		}
 		else if(m.getType() == 1)		//received unchoke: now I can send request messages to this neighbor for each piece that I need
 		{
-			//TODO: unchoke
+			System.out.println("I am Peer " + peerID + " and I just received an Unchoke message from Peer " + neighborPeerID);
+			determineRequests(neighborPeerID);
 		}
 		else if(m.getType() == 2)		//received interested: now I want to determine if I want to choke or unchoke that peer
 		{
@@ -128,7 +129,7 @@ public class Peer {
 		}
 		else if(m.getType() == 6)		//request
 		{
-			//TODO: request
+			determineChoking(neighborPeerID);
 		}
 		else if(m.getType() == 7)		//piece
 		{
@@ -233,18 +234,32 @@ public class Peer {
 		String neighborBitfieldString = new String(neighborBitfield);
 		String myBitfieldString = new String(myBitfield);
 		
-		for(int i = 0; i < neighborBitfieldString.length(); i++)
+		byte[]pieceIndex = new byte[1];
+		
+		try
 		{
-			if(myBitfieldString.charAt(i) == '0')
+			for(int i = 0; i < neighborBitfieldString.length(); i++)
 			{
-				if(neighborBitfieldString.charAt(i) == '1')
-				{
-					System.out.println("I am Peer " + peerID + " and I am going to request piece " + i + " from " + neighborPeerID);
-					clients.get(neighborPeerID).sendInterested();				//Neighbor peer has a piece that I don't have!
-					return;
+				if(myBitfieldString.charAt(i) == '0')
+				{				
+					if(neighborBitfieldString.charAt(i) == '1')
+					{
+						System.out.println("I am Peer " + peerID + " and I am going to request piece " + i + " from " + neighborPeerID);
+						String pieceIndexString = i + "";										//probably a better way to do this, but I just converted int to string to byte array
+						pieceIndex = pieceIndexString.getBytes("US-ASCII");
+						clients.get(neighborPeerID).sendRequest(pieceIndex);
+						return;
+					}
 				}
 			}
 		}
+		catch (Exception e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 	}
 	public void request(int neighborPeerID, byte[] pieceIndex)
 	{
