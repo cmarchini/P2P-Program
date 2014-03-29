@@ -115,7 +115,7 @@ public class Client implements Runnable
 		if(handshakeComplete())		//when handshake is complete, send bitfield
 		{
 			System.out.println("I am a client of Peer " + myPeerID + ".  The handshake with Peer " + neighborPeerID + " has been completed");
-			bitfield();
+			sendBitfield();
 		}
 	}
 
@@ -127,36 +127,36 @@ public class Client implements Runnable
 	}
 	
 	//Generates Normal Messages
-	public void choke()
+	public void sendChoke()
 	{
 		sendMessage(new NormalMessage(1,0));
 	}
-	public void unchoke()
+	public void sendUnchoke()
 	{
 		sendMessage(new NormalMessage(1,1));
 	}
-	public void interested()
+	public void sendInterested()
 	{
 		sendMessage(new NormalMessage(1,2));
 	}
-	public void notInterested()
+	public void sendNotInterested()
 	{
 		sendMessage(new NormalMessage(1,3));
 	}
-	public void have()
+	public void sendHave()
 	{
 		sendMessage(new NormalMessage(1,4));
 	}
-	public void bitfield()
+	public void sendBitfield()
 	{
 		byte[] bitfield = peer.generateBitfield();
 		sendMessage(new NormalMessage(bitfield.length + 1,5,bitfield));
 	}
-	public void request()
+	public void sendRequest()
 	{
 		sendMessage(new NormalMessage(1,6));
 	}
-	public void piece()
+	public void sendPiece()
 	{
 		sendMessage(new NormalMessage(1,7));
 	}
