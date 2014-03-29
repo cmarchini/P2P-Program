@@ -117,7 +117,18 @@ public class Client implements Runnable
 			peer.sendBitfieldMessage(neighborPeerID);
 		}
 	}
+
 	
+	public void interested()
+	{
+		sendMessage(new NormalMessage(1,2));
+	}
+	public void notInterested()
+	{
+		sendMessage(new NormalMessage(1,3));
+	}
+	
+	//Sends any type of message to a peer
 	public void sendMessage(Message msg) {	
 		try 
 		{

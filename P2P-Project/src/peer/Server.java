@@ -100,19 +100,9 @@ class ServerConnection implements Runnable {
 		try {
 			boolean serverStop = false;
 
-			while (true) {
+			while (true) 
+			{
 				parseInput();
-				//peer.processMessage(msg); // TODO
-//				if ( line.equalsIgnoreCase("q") ) {
-//					serverStop = true;
-//					break;
-//				}
-//				if ( line.equalsIgnoreCase("u") ) break;
-
-
-				//os.println("" + line.toUpperCase()); 
-				//peer.sendMessage(myPeerID, new HandshakeMessage(myPeerID));
-
 			}
 
 			// TODO figure out later
@@ -129,38 +119,50 @@ class ServerConnection implements Runnable {
 		}
 	}
 	
-	private Message parseInput() throws IOException {
-		Message m = null;
-		
-    int len = dis.readInt();
-    byte type = dis.readByte();
-    
-    if (type == 'O') 
-    {
-      for (int i=0; i<23; i++) {
-      	dis.readByte();
-      }
-      
-      neighborPeerID = dis.readInt();
+	private void parseInput() throws IOException {
+	    int len = dis.readInt();				//len is the length of the payload AND the one byte for the type
+	    byte type = dis.readByte();
+	    
+	    if (type == 'O') 
+	    {
+	      for (int i=0; i<23; i++) {
+	      	dis.readByte();
+	      }
+	      
+	      neighborPeerID = dis.readInt();
+	
+	      HandshakeMessage handshake = new HandshakeMessage(neighborPeerID);
+	      
+	      System.out.println( "I am the server of Peer " + myPeerID + " and I just received the following message: " + handshake.getMessageString());
+	      
+	      peer.receivedhandshake(handshake);
+	    } 
+	    else 
+	    {
+	    	if(len - 1 > 0)
+	    	{
+	  	      	byte[] data = new byte[len - 1];		//array of length len-1 since we exclude the byte for type
+	  	      	dis.read(data);
+		      
+	  	      	NormalMessage m = new NormalMessage(len, type, data);
+	  	      	System.out.println( "I am the server of Peer " + myPeerID + " and I just received the following message from Peer " + neighborPeerID + ": " + m.getMessageString() + " (length " + len + " and type " + type + " and data: " + new String(data) + ")");
+		      
+	  	      	peer.receiveNormalMessage(neighborPeerID, m);
+	    	}
+	    	else 
+	    	{
+	    		NormalMessage m = new NormalMessage(len, type);
+			    System.out.println( "I am the server of Peer " + myPeerID + " and I just received the following message from Peer " + neighborPeerID + ": " + m.getMessageString() + " (length " + len + " and type " + type + ")");
+			      
+			    peer.receiveNormalMessage(neighborPeerID, m);
+	    	}
 
-      HandshakeMessage handshake = new HandshakeMessage(neighborPeerID);
-      
-      System.out.println( "I am the server of Peer " + myPeerID + " and I just received the following message: " + handshake.getMessageString());
-      
-      peer.receivedhandshake(handshake);
-    } 
-    else 
-    {
-      byte[] data = new byte[len];
-      dis.read(data);
-  
-      m = new NormalMessage(len, type, data);
-      System.out.println( "I am the server of Peer " + myPeerID + " and I just received the following message from Peer " + neighborPeerID + ": " + m.getMessageString() + " (length " + len + " and type " + type + " and data: " + new String(data) + ")");
-    }
+	  
+
+	    }
     
-    return m;
-		
-		//line = is.readLine();
 	}
+	
+
 }
 
