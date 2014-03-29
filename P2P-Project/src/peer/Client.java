@@ -156,9 +156,35 @@ public class Client implements Runnable
 	{
 		sendMessage(new NormalMessage(pieceIndex.length,6,pieceIndex));
 	}
-	public void sendPiece()
+	public void sendPiece(String filename, int index)
 	{
-		sendMessage(new NormalMessage(1,7));
+		int len = 32768; // TODO PieceSize
+		int off = len*index;
+		
+		byte[] piece = new byte[len];
+		FileInputStream file;
+		try {
+			file = new FileInputStream(filename);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+		
+		try {
+			file.read(piece, off, len);
+			file.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+		
+		sendMessage(new NormalMessage(1,7,piece));
+		
+		// TODO - might need to make more memory-efficient by not creating the huge piece array
+		// either send in blocks (ideal?) or byte-by-byte
+		// see http://stackoverflow.com/questions/7616776/sending-a-file-using-dataoutputstream-in-java
 	}
 	
 	//Sends any type of message to a peer
