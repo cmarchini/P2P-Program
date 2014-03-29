@@ -66,8 +66,7 @@ public class Client implements Runnable
 		}
 
 		//try {
-			sendMessage(new HandshakeMessage(myPeerID)); // send a handshake to my peer.  Attach my peerID so the peer knows who I am.
-			handshake();
+			handshake(); // If I got to this point, then I have connected to the neighbor peer.  I will send a handshake to that peer.  Attach my peerID so the peer knows who I am.
 			//closeConnection();
 						
 			/*while ( true ) 
@@ -107,18 +106,33 @@ public class Client implements Runnable
 		}
 	}
 	//Increment handshakes.  If the hanshake is complete, tell peer that I am ready to send a bitfield message
-	public void handshake()
+	public void incrementHandshake()
 	{
 		handshake++;
 		
-		if(handshakeComplete())
+		if(handshakeComplete())		//when handshake is complete, send bitfield
 		{
 			System.out.println("I am a client of Peer " + myPeerID + ".  The handshake with Peer " + neighborPeerID + " has been completed");
-			peer.sendBitfieldMessage(neighborPeerID);
+			bitfield();
 		}
 	}
 
+	//Generates Handshake Message
+	public void handshake()
+	{
+		sendMessage(new HandshakeMessage(myPeerID));
+		incrementHandshake();
+	}
 	
+	//Generates Normal Messages
+	public void choke()
+	{
+		sendMessage(new NormalMessage(1,0));
+	}
+	public void unchoke()
+	{
+		sendMessage(new NormalMessage(1,1));
+	}
 	public void interested()
 	{
 		sendMessage(new NormalMessage(1,2));
@@ -126,6 +140,23 @@ public class Client implements Runnable
 	public void notInterested()
 	{
 		sendMessage(new NormalMessage(1,3));
+	}
+	public void have()
+	{
+		sendMessage(new NormalMessage(1,4));
+	}
+	public void bitfield()
+	{
+		byte[] bitfield = peer.generateBitfield();
+		sendMessage(new NormalMessage(bitfield.length + 1,5,bitfield));
+	}
+	public void request()
+	{
+		sendMessage(new NormalMessage(1,6));
+	}
+	public void piece()
+	{
+		sendMessage(new NormalMessage(1,7));
 	}
 	
 	//Sends any type of message to a peer

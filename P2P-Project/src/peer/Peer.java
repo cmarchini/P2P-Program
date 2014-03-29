@@ -12,9 +12,19 @@ public class Peer {
 	int peerID;
 	int pieces = 5;
 	int hasFile = 0;     //Equal to 1 if peer has all pieces of file
-
 	int serverPort;
 
+	//configuration variables
+	int numberOfPreferredNeighbors = 1;
+	int unchokingInterval;
+	int optimisticUnchokingInterval;
+	
+	int currentNumberOfPreferredNeighbors = 0;
+	
+	//interested
+	List<Integer> interestedClients = new ArrayList<Integer>();
+	List<Integer> unchokedClients = new ArrayList<Integer>();
+	
 	public static void main( String[] args ) 
 	{
 		if (args.length >= 1) try {
@@ -34,7 +44,7 @@ public class Peer {
 	}
 	
 	public Peer() {
-		this.peerID = 1001;
+		this.peerID = 1003;
 	}
 	
 	public void start() {
@@ -74,10 +84,11 @@ public class Peer {
 		new Thread(newPeerServer).start();
 	}
 
+	//logic to handle a handshake message received from another peer
 	public void receivedhandshake(HandshakeMessage msg)
 	{
 		//If Peer A sends a handshake message to me, then I will tell my client that is associated with Peer A that we received a handshake from Peer A
-		clients.get(msg.getPeerID()).handshake();
+		clients.get(msg.getPeerID()).incrementHandshake();
 	}
 	
 	//logic to handle a normal message received from another peer
@@ -90,10 +101,12 @@ public class Peer {
 		{
 			//TODO: unchoke
 		}
-		else if(m.getType() == 2)		//interested
+		else if(m.getType() == 2)		//received interested: now I want to determine if I want to choke or unchoke that peer
 		{
 			//TODO: interested
 			System.out.println("I am Peer " + peerID + " and I just received an Interested message from Peer " + neighborPeerID);
+			interestedClients.add(neighborPeerID);
+			determineChoking(neighborPeerID);
 
 		}
 		else if(m.getType() == 3)		//not interested
@@ -105,7 +118,7 @@ public class Peer {
 		{
 			//TODO: have
 		}
-		else if(m.getType() == 5)		//bitfield
+		else if(m.getType() == 5)		//received bitfield: now I want to determine if I am interested in that peer
 		{
 			System.out.println("I am Peer " + peerID + " and I just received a Bitfield message from Peer " + neighborPeerID + ".  I will determine if they have any interesting pieces.");
 			determineInterest(neighborPeerID, m.getPayload());
@@ -123,12 +136,60 @@ public class Peer {
 			System.err.println("I am peer " + peerID + " and I just received a message of an invalid type!");
 		}
 	}
-	
-	public void sendBitfieldMessage(int neighborPeerID)
+
+	//Type 0/1: choke methods
+	public void determineChoking(int neighborPeerID)
 	{
-		byte[] bitfield = generateBitfield();
-		clients.get(neighborPeerID).sendMessage(new NormalMessage(bitfield.length + 1,5,bitfield));
-	}	
+		if(hasFile == 1)		//if peer has all pieces, then it chooses neighbor peers to unchoke/choke randomly
+		{
+			while(interestedClients.size() > 0 && unchokedClients.size() < numberOfPreferredNeighbors)
+			{
+				int newUnchokedClient = interestedClients.remove(0);
+				unchokedClients.add(newUnchokedClient);
+				System.out.println("Peer " + peerID + " is unchoking Peer " + newUnchokedClient);
+				clients.get(newUnchokedClient).unchoke();
+			}
+			
+			for(int i = 0; i < interestedClients.size(); i++)
+			{
+				System.out.println("Peer " + peerID + " is choking Peer " + interestedClients.get(i));
+				clients.get(interestedClients.get(i)).choke();
+			}
+		}
+		else
+		{
+			//TODO: Determine who is a preferred neighbor based upon their download speed
+			System.out.println("NOT YET IMPLEMENTED: I need to determine who is a preferred neighbor based upon their download speed");
+		}
+	}
+	//Type 2/3: interest methods
+	public void determineInterest(int neighborPeerID, byte[] neighborBitfield)	//determine interest based upon neighbor's bitfield
+	{
+		if(hasFile != 1)														//if peer already has all the pieces, don't even bother checking neighbor's bitfield
+		{
+			byte[] myBitfield = generateBitfield();
+			
+			String neighborBitfieldString = new String(neighborBitfield);
+			String myBitfieldString = new String(myBitfield);
+			
+			for(int i = 0; i < neighborBitfieldString.length(); i++)
+			{
+				if(myBitfieldString.charAt(i) == '0')
+				{
+					if(neighborBitfieldString.charAt(i) == '1')
+					{
+						System.out.println("I am Peer " + peerID + " and I am interested in " + neighborPeerID);
+						clients.get(neighborPeerID).interested();				//Neighbor peer has a piece that I don't have!
+						return;
+					}
+				}
+			}
+		}
+
+		System.out.println("I am Peer " + peerID + " and I am not interested in " + neighborPeerID);
+		clients.get(neighborPeerID).notInterested();							//I already have all the pieces that this neighbor has
+	}
+	//Type 5: bitfield methods
 	public byte[] generateBitfield()
 	{
 		byte[] bitfield = {};
@@ -159,32 +220,6 @@ public class Peer {
 		}
 
 		return bitfield;
-	}
-	public void determineInterest(int neighborPeerID, byte[] neighborBitfield)	//determine interest based upon neighbor's bitfield
-	{
-		if(hasFile != 1)														//if peer already has all the pieces, don't even bother checking neighbor's bitfield
-		{
-			byte[] myBitfield = generateBitfield();
-			
-			String neighborBitfieldString = new String(neighborBitfield);
-			String myBitfieldString = new String(myBitfield);
-			
-			for(int i = 0; i < neighborBitfieldString.length(); i++)
-			{
-				if(myBitfieldString.charAt(i) == '0')
-				{
-					if(neighborBitfieldString.charAt(i) == '1')
-					{
-						System.out.println("I am Peer " + peerID + " and I am interested in " + neighborPeerID);
-						clients.get(neighborPeerID).interested();				//Neighbor peer has a piece that I don't have!
-						return;
-					}
-				}
-			}
-		}
-
-		System.out.println("I am Peer " + peerID + " and I am not interested in " + neighborPeerID);
-		clients.get(neighborPeerID).notInterested();							//I already have all the pieces that this neighbor has
 	}
 	public void request(int neighborPeerID, byte[] pieceIndex)
 	{
