@@ -47,7 +47,7 @@ public class Peer {
 	}
 	
 	public Peer() {
-		this.peerID = 1003;
+		this.peerID = 1001;
 	}
 	
 	public void start() {
