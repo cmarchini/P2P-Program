@@ -154,11 +154,11 @@ public class Client implements Runnable
 	}
 	public void sendRequest(byte[] pieceIndex)
 	{
-		sendMessage(new NormalMessage(pieceIndex.length,6,pieceIndex));
+		sendMessage(new NormalMessage(pieceIndex.length + 1,6,pieceIndex));
 	}
 	public void sendPiece(String filename, int index)
 	{
-		int len = 32768; // TODO PieceSize
+		int len = 4; // TODO PieceSize
 		int off = len*index;
 		
 		byte[] piece = new byte[len];
@@ -180,7 +180,7 @@ public class Client implements Runnable
 			return;
 		}
 		
-		sendMessage(new NormalMessage(1,7,piece));
+		sendMessage(new NormalMessage(piece.length + 1,7,piece));
 		
 		// TODO - might need to make more memory-efficient by not creating the huge piece array
 		// either send in blocks (ideal?) or byte-by-byte

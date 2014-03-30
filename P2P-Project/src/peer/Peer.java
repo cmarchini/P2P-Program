@@ -11,13 +11,14 @@ public class Peer {
 	Map<Integer, Client> clients = new HashMap<Integer, Client>();
 	int peerID;
 	int pieces = 5;
-	int hasFile = 0;     //Equal to 1 if peer has all pieces of file
+	int hasFile = 1;     //Equal to 1 if peer has all pieces of file
 	int serverPort;
 
 	//configuration variables
 	int numberOfPreferredNeighbors = 1;
 	int unchokingInterval;
 	int optimisticUnchokingInterval;
+	String fileName = "alice.dat";
 	
 	int currentNumberOfPreferredNeighbors = 0;
 	
@@ -127,13 +128,22 @@ public class Peer {
 			bitfields.put(neighborPeerID, m.getPayload());
 			determineInterest(neighborPeerID, m.getPayload());
 		}
-		else if(m.getType() == 6)		//request
+		else if(m.getType() == 6)		//received request: now I will send the requested piece
 		{
-			determineChoking(neighborPeerID);
+			String s = new String(m.getPayload());
+			int index = Integer.parseInt(s);
+			clients.get(neighborPeerID).sendPiece(fileName, index);
 		}
-		else if(m.getType() == 7)		//piece
+		else if(m.getType() == 7)		//received piece: now I will add this piece to my directory. I will also send out a have message to let other peers know I know have this piece
 		{
-			//TODO: piece
+			
+			
+			
+			
+			
+			
+			
+			System.out.println("Oh wow, look at all this stuff I got from Peer " + neighborPeerID + ": " + new String(m.getPayload()));
 		}
 		else
 		{
@@ -270,5 +280,6 @@ public class Peer {
 	{
 
 	}
+	
 
 }
