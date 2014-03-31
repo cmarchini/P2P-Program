@@ -10,9 +10,9 @@ import java.io.UnsupportedEncodingException;
 
 public class NormalMessage implements Message {
 	
-	private int length;
-	private int type;
-	private byte[] payload;
+	protected int length;
+	protected int type;
+	protected byte[] payload;
 	/**
 	 * 
 	 */
