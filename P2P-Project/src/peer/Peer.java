@@ -118,7 +118,36 @@ public class Peer {
 		}
 		else if(m.getType() == 4)		//have
 		{
-			//TODO: have
+			System.out.println("I am Peer " + peerID + " and I just received a Have message from Peer " + neighborPeerID + ".  I will mark my bitfield with the piece they now have.");
+			
+			//retrieve the bitfield to manipulate
+			byte[] bitField = bitfields.get(neighborPeerID);
+			
+			//get integer of bit to set to true
+			byte[] bytes = m.getPayload();
+			int bitToSet = java.nio.ByteBuffer.wrap(bytes).getInt();
+			
+			System.out.println("The bitfield contained: " + bitField.toString());
+			System.out.println("I need to set the bit number: " + bytes.toString());
+			System.out.println("Which is the same as int: " + bitToSet);
+			
+			//get the index for the byte to shift and the bit for the index of the bit
+			int byteIndex = bitToSet / 8;
+			int bitIndex = (bitToSet % 8); //subtracting from seven because high bits are low bits in the bitfield
+			
+			System.out.println("The byte I'm going to set from the array is " + byteIndex);
+			
+			byte b = bitField[byteIndex];
+			
+			System.out.println("The byte contains: " + b);
+			
+			//set the bit in the byte
+			b = (byte) (b | (byte) (1 << bitIndex));
+			
+			bitField[byteIndex] = b;
+			
+			System.out.println("The byte is now: " + bitField[byteIndex]);
+			
 		}
 		else if(m.getType() == 5)		//received bitfield: now I want to determine if I am interested in that peer
 		{
@@ -150,13 +179,13 @@ public class Peer {
 				int newUnchokedClient = interestedClients.remove(0);
 				unchokedClients.add(newUnchokedClient);
 				System.out.println("Peer " + peerID + " is unchoking Peer " + newUnchokedClient);
-				clients.get(newUnchokedClient).sendUnchoke();
+				clients.get(newUnchokedClient).unchoke();
 			}
 			
 			for(int i = 0; i < interestedClients.size(); i++)
 			{
 				System.out.println("Peer " + peerID + " is choking Peer " + interestedClients.get(i));
-				clients.get(interestedClients.get(i)).sendChoke();
+				clients.get(interestedClients.get(i)).choke();
 			}
 		}
 		else
@@ -182,7 +211,7 @@ public class Peer {
 					if(neighborBitfieldString.charAt(i) == '1')
 					{
 						System.out.println("I am Peer " + peerID + " and I am interested in " + neighborPeerID);
-						clients.get(neighborPeerID).sendInterested();				//Neighbor peer has a piece that I don't have!
+						clients.get(neighborPeerID).interested();				//Neighbor peer has a piece that I don't have!
 						return;
 					}
 				}
@@ -190,7 +219,7 @@ public class Peer {
 		}
 
 		System.out.println("I am Peer " + peerID + " and I am not interested in " + neighborPeerID);
-		clients.get(neighborPeerID).sendNotInterested();							//I already have all the pieces that this neighbor has
+		clients.get(neighborPeerID).notInterested();							//I already have all the pieces that this neighbor has
 	}
 	//Type 5: bitfield methods
 	public byte[] generateBitfield()
@@ -240,7 +269,7 @@ public class Peer {
 				if(neighborBitfieldString.charAt(i) == '1')
 				{
 					System.out.println("I am Peer " + peerID + " and I am going to request piece " + i + " from " + neighborPeerID);
-					clients.get(neighborPeerID).sendInterested();				//Neighbor peer has a piece that I don't have!
+					clients.get(neighborPeerID).interested();				//Neighbor peer has a piece that I don't have!
 					return;
 				}
 			}
