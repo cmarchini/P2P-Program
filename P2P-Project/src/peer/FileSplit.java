@@ -18,7 +18,7 @@ public class FileSplit {
             int remaining = buffer.length; 
             // block number is incremented each time a block of 1024 bytes is read 
             //and written
-            int blockNumber = 1;
+            int blockNumber = 0;
             while (true) {
                 int read = fis.read(buffer, buffer.length - remaining, remaining);
                 if (read >= 0) { // some bytes were read

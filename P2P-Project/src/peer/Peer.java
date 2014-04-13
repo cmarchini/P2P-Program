@@ -13,7 +13,7 @@ public class Peer {
 	Map<Integer, Client> clients = new HashMap<Integer, Client>();
 	int peerID;
 	int pieces = 5;
-	int hasFile = 1;     //Equal to 1 if peer has all pieces of file
+	int hasFile = 0;     //Equal to 1 if peer has all pieces of file
 	int serverPort;
 
 	//configuration variables
