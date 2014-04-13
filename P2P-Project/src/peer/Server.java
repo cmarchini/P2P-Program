@@ -139,7 +139,16 @@ class ServerConnection implements Runnable {
 	    } 
 	    else 
 	    {
-	    	if(len - 1 > 0)
+	    	if(type == 7) // PieceMessage
+	    	{
+	    		int pieceIndex = dis.readInt();
+	    		
+	      	ReceivingPieceMessage m = new ReceivingPieceMessage(len, peer.pieceSize, pieceIndex, dis);
+	      	System.out.println( "I am the server of Peer " + myPeerID + " and I just received the following piece message from Peer " + neighborPeerID + ": " + m.getMessageString() + " (length " + len + " and piece index: " + pieceIndex + ")");
+      
+	      	peer.receiveNormalMessage(neighborPeerID, m);
+	    	}
+	    	else if(len - 1 > 0)
 	    	{
 	  	      	byte[] data = new byte[len - 1];		//array of length len-1 since we exclude the byte for type
 	  	      	dis.read(data);
