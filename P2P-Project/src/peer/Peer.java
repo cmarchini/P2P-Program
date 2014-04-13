@@ -1,6 +1,8 @@
 package peer;
 import java.io.*;
 import java.net.ServerSocket;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +21,7 @@ public class Peer {
 	int unchokingInterval;
 	int optimisticUnchokingInterval;
 	String fileName = "alice.dat";
+	int pieceSize = 32768;
 	
 	int currentNumberOfPreferredNeighbors = 0;
 	
@@ -48,7 +51,7 @@ public class Peer {
 	}
 	
 	public Peer() {
-		this.peerID = 1001;
+		this.peerID = 1003;
 	}
 	
 	public void start() {
@@ -136,14 +139,21 @@ public class Peer {
 		}
 		else if(m.getType() == 7)		//received piece: now I will add this piece to my directory. I will also send out a have message to let other peers know I know have this piece
 		{
+			ReceivingPieceMessage rpm = ((ReceivingPieceMessage)m);
+			try {
+				rpm.writeToFile(fileName);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			
+			System.out.println("Oh wow, look at this piece index I got from Peer " + neighborPeerID + ": " + rpm.getPieceIndex());
 			
+			// TODO
 			
+			// should we update the bitfields?
 			
-			
-			
-			
-			System.out.println("Oh wow, look at all this stuff I got from Peer " + neighborPeerID + ": " + new String(m.getPayload()));
+			// Is this what is supposed to happen next?
+			// 			determineRequests(neighborPeerID);
 		}
 		else
 		{
