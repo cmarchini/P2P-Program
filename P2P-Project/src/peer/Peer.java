@@ -11,13 +11,14 @@ public class Peer {
 	Map<Integer, Client> clients = new HashMap<Integer, Client>();
 	int peerID;
 	int pieces = 5;
-	int hasFile = 0;     //Equal to 1 if peer has all pieces of file
+	int hasFile = 1;     //Equal to 1 if peer has all pieces of file
 	int serverPort;
 
 	//configuration variables
 	int numberOfPreferredNeighbors = 1;
 	int unchokingInterval;
 	int optimisticUnchokingInterval;
+	String fileName = "alice.dat";
 	
 	int currentNumberOfPreferredNeighbors = 0;
 	
@@ -47,7 +48,7 @@ public class Peer {
 	}
 	
 	public Peer() {
-		this.peerID = 1003;
+		this.peerID = 1001;
 	}
 	
 	public void start() {
@@ -96,13 +97,14 @@ public class Peer {
 	
 	//logic to handle a normal message received from another peer
 	public void receiveNormalMessage(int neighborPeerID, NormalMessage m){
-		if(m.getType() == 0)			//choke
+		if(m.getType() == 0)			//received choke:
 		{
-			//TODO: choke
+			System.out.println("I am Peer " + peerID + " and I just received an Choke message from Peer " + neighborPeerID);
 		}
 		else if(m.getType() == 1)		//received unchoke: now I can send request messages to this neighbor for each piece that I need
 		{
-			//TODO: unchoke
+			System.out.println("I am Peer " + peerID + " and I just received an Unchoke message from Peer " + neighborPeerID);
+			determineRequests(neighborPeerID);
 		}
 		else if(m.getType() == 2)		//received interested: now I want to determine if I want to choke or unchoke that peer
 		{
@@ -155,13 +157,15 @@ public class Peer {
 			bitfields.put(neighborPeerID, m.getPayload());
 			determineInterest(neighborPeerID, m.getPayload());
 		}
-		else if(m.getType() == 6)		//request
+		else if(m.getType() == 6)		//received request: now I will send the requested piece
 		{
-			//TODO: request
+			String s = new String(m.getPayload());
+			int index = Integer.parseInt(s);
+			clients.get(neighborPeerID).sendPiece(fileName, index);
 		}
-		else if(m.getType() == 7)		//piece
+		else if(m.getType() == 7)		//received piece: now I will add this piece to my directory. I will also send out a have message to let other peers know I know have this piece
 		{
-			//TODO: piece
+			System.out.println("Oh wow, look at all this stuff I got from Peer " + neighborPeerID + ": " + new String(m.getPayload()));
 		}
 		else
 		{
@@ -179,13 +183,13 @@ public class Peer {
 				int newUnchokedClient = interestedClients.remove(0);
 				unchokedClients.add(newUnchokedClient);
 				System.out.println("Peer " + peerID + " is unchoking Peer " + newUnchokedClient);
-				clients.get(newUnchokedClient).unchoke();
+				clients.get(newUnchokedClient).sendUnchoke();
 			}
 			
 			for(int i = 0; i < interestedClients.size(); i++)
 			{
 				System.out.println("Peer " + peerID + " is choking Peer " + interestedClients.get(i));
-				clients.get(interestedClients.get(i)).choke();
+				clients.get(interestedClients.get(i)).sendChoke();
 			}
 		}
 		else
@@ -211,7 +215,7 @@ public class Peer {
 					if(neighborBitfieldString.charAt(i) == '1')
 					{
 						System.out.println("I am Peer " + peerID + " and I am interested in " + neighborPeerID);
-						clients.get(neighborPeerID).interested();				//Neighbor peer has a piece that I don't have!
+						clients.get(neighborPeerID).sendInterested();				//Neighbor peer has a piece that I don't have!
 						return;
 					}
 				}
@@ -219,7 +223,7 @@ public class Peer {
 		}
 
 		System.out.println("I am Peer " + peerID + " and I am not interested in " + neighborPeerID);
-		clients.get(neighborPeerID).notInterested();							//I already have all the pieces that this neighbor has
+		clients.get(neighborPeerID).sendNotInterested();							//I already have all the pieces that this neighbor has
 	}
 	//Type 5: bitfield methods
 	public byte[] generateBitfield()
@@ -262,18 +266,32 @@ public class Peer {
 		String neighborBitfieldString = new String(neighborBitfield);
 		String myBitfieldString = new String(myBitfield);
 		
-		for(int i = 0; i < neighborBitfieldString.length(); i++)
+		byte[]pieceIndex = new byte[1];
+		
+		try
 		{
-			if(myBitfieldString.charAt(i) == '0')
+			for(int i = 0; i < neighborBitfieldString.length(); i++)
 			{
-				if(neighborBitfieldString.charAt(i) == '1')
-				{
-					System.out.println("I am Peer " + peerID + " and I am going to request piece " + i + " from " + neighborPeerID);
-					clients.get(neighborPeerID).interested();				//Neighbor peer has a piece that I don't have!
-					return;
+				if(myBitfieldString.charAt(i) == '0')
+				{				
+					if(neighborBitfieldString.charAt(i) == '1')
+					{
+						System.out.println("I am Peer " + peerID + " and I am going to request piece " + i + " from " + neighborPeerID);
+						String pieceIndexString = i + "";										//probably a better way to do this, but I just converted int to string to byte array
+						pieceIndex = pieceIndexString.getBytes("US-ASCII");
+						clients.get(neighborPeerID).sendRequest(pieceIndex);
+						return;
+					}
 				}
 			}
 		}
+		catch (Exception e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 	}
 	public void request(int neighborPeerID, byte[] pieceIndex)
 	{
@@ -284,5 +302,6 @@ public class Peer {
 	{
 
 	}
+	
 
 }

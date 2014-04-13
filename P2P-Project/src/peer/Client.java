@@ -89,6 +89,8 @@ public class Client implements Runnable
 	}           
 
 	//Keep track of the number of handshakes
+	//TODO: make sure handshake gets complete eventually if first message was not received
+	//			can implement with while loop
 	public boolean handshakeComplete()
 	{
 		if(handshake < 2)
@@ -150,13 +152,39 @@ public class Client implements Runnable
 		byte[] bitfield = peer.generateBitfield();
 		sendMessage(new NormalMessage(bitfield.length + 1,5,bitfield));
 	}
-	public void sendRequest()
+	public void sendRequest(byte[] pieceIndex)
 	{
-		sendMessage(new NormalMessage(1,6));
+		sendMessage(new NormalMessage(pieceIndex.length + 1,6,pieceIndex));
 	}
-	public void sendPiece()
+	public void sendPiece(String filename, int index)
 	{
-		sendMessage(new NormalMessage(1,7));
+		int len = 4; // TODO PieceSize
+		int off = len*index;
+		
+		byte[] piece = new byte[len];
+		FileInputStream file;
+		try {
+			file = new FileInputStream(filename);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+		
+		try {
+			file.read(piece, off, len);
+			file.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+		
+		sendMessage(new NormalMessage(piece.length + 1,7,piece));
+		
+		// TODO - might need to make more memory-efficient by not creating the huge piece array
+		// either send in blocks (ideal?) or byte-by-byte
+		// see http://stackoverflow.com/questions/7616776/sending-a-file-using-dataoutputstream-in-java
 	}
 	
 	//Sends any type of message to a peer
