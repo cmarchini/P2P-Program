@@ -61,9 +61,9 @@ public class NormalMessage implements Message {
 	public String getMessageString()
 	{
 		if(payload != null)
-			return length + "" + type + payload;	
+			return length + "-" + type + "-" + payload;	
 		else
-			return length + "" + type;
+			return length + "-" + type;
 	}
 	
 	public void writeTo(DataOutputStream os) throws IOException {
