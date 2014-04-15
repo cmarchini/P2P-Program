@@ -164,6 +164,7 @@ public class Peer {
 		{
 			String s = new String(m.getPayload());
 			int index = Integer.parseInt(s);
+			System.out.println("I am Peer " + peerID + " and I just received a Request message with index " + index + " from Peer " + neighborPeerID);
 			clients.get(neighborPeerID).sendPiece(fileName, index);
 		}
 		else if(m.getType() == 7)		//received piece: now I will add this piece to my directory. I will also send out a have message to let other peers know I know have this piece
