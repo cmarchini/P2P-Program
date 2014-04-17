@@ -37,7 +37,7 @@ public class ReceivingPieceMessage extends NormalMessage {
   	ByteBuffer out;
 
 
-		try (FileChannel fc = (FileChannel.open(new File(fileName).toPath(), READ, WRITE))) {
+		try (FileChannel fc = (FileChannel.open(new File(fileName).toPath(), READ, WRITE, CREATE))) {
 		    fc.position(offset);
 				while (remainingLengthOfPiece > BLOCK_SIZE) {
 					// read data from network

@@ -30,26 +30,25 @@ public class SendingPieceMessage extends NormalMessage {
 	}
 	
 	public void writeTo(DataOutputStream os) throws IOException {
-		int remainingLengthOfPiece = length - ADDITIONAL_LENGTH;
-		int blockOffset = offset;
+		int remainingLengthOfPiece = length - ADDITIONAL_LENGTH; // bits left to send
 		
-		byte[] block = new byte[BLOCK_SIZE];
+		byte[] block = new byte[BLOCK_SIZE]; // block to send
 		FileInputStream fis;
 		try {
-			fis = new FileInputStream(file);
+			fis = new FileInputStream(file); // input
 
-			os.writeInt(length);
+			os.writeInt(length); // sending info to output
 			os.writeByte(type);
 			os.writeInt(pieceIndex);
 
+			fis.skip(offset); // position in file is now at offset
 			while (remainingLengthOfPiece > BLOCK_SIZE) {
-				fis.read(block, blockOffset, BLOCK_SIZE);
-				os.write(block);
+				fis.read(block, 0, BLOCK_SIZE); // after this, position is += BLOCK_SIZE
+				os.write(block); // write block to output stream
 				
 				remainingLengthOfPiece -= BLOCK_SIZE;
-				blockOffset += BLOCK_SIZE;
-			}
-			fis.read(block, blockOffset, remainingLengthOfPiece);
+			} // complete last send with smaller block:
+			fis.read(block, 0, remainingLengthOfPiece);
 			os.write(block, 0, remainingLengthOfPiece);
 			
 			fis.close();
