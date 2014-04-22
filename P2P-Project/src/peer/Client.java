@@ -88,6 +88,11 @@ public class Client implements Runnable
 		}*/
 	}           
 
+	public int getNeighborPeerID()
+	{
+		return neighborPeerID;
+	}
+	
 	//Keep track of the number of handshakes
 	//TODO: make sure handshake gets complete eventually if first message was not received
 	//			can implement with while loop
