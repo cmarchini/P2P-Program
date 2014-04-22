@@ -58,6 +58,21 @@ public class Peer {
 	public Peer(int peerID) {
 		this.peerID = peerID;
 		
+		new java.util.Timer().schedule( 
+		        new java.util.TimerTask() {
+		            @Override
+
+		            
+		            public void run() {
+		               System.out.println(" this is called every 5 sec");
+		            }
+		        }, 
+		        5000 
+		);
+		
+		//MyTimerTask test = new MyTimerTask(peerID + "");
+		//test.run();
+		
 		initialize();
 	}
 
@@ -67,6 +82,12 @@ public class Peer {
 		int hasFileInt = 0;
 		
 		hasFile = (hasFileInt == 1);
+		
+		new java.util.Timer().schedule( 
+		        new MyTimerTask("" + peerID) 
+		        , 
+		        0,5000 
+		);
 		
 		initialize();
 	}
@@ -195,8 +216,11 @@ public class Peer {
 		}
 		else if(m.getType() == 6)		//received request: now I will send the requested piece
 		{
-			String s = new String(m.getPayload());
-			int index = Integer.parseInt(s);
+			//String s = new String(m.getPayload());
+			//int index = Integer.parseInt(s);
+			byte[] bytes = m.getPayload();
+			int index = java.nio.ByteBuffer.wrap(bytes).getInt();
+			
 			System.out.println("I am Peer " + peerID + " and I just received a Request message with index " + index + " from Peer " + neighborPeerID);
 			clients.get(neighborPeerID).sendPiece(filePath, index);
 		}
@@ -373,11 +397,46 @@ public class Peer {
 		//byte[] myBitfield = generateBitfield();
 		byte[] neighborBitfield = bitfields.get(neighborPeerID);
 		
-		String neighborBitfieldString = new String(neighborBitfield);
-		String myBitfieldString = new String(myBitfield);
+		//String neighborBitfieldString = new String(neighborBitfield);
+		//String myBitfieldString = new String(myBitfield);
 		
-		byte[]pieceIndex = new byte[1];
+		byte[]pieceIndex = new byte[4];
+
 		
+		
+		
+		
+		for(int i = 0; i < numPieces; i++)
+		{
+			//System.out.println("I have the piece: " + hasPiece(myBitfield, i) + ". My neighbor has the piece : " + hasPiece(neighborBitfield, i));
+			if(hasPiece(neighborBitfield, i))
+			{
+				if(!hasPiece(myBitfield, i))
+				{
+					System.out.println("I am Peer " + peerID + " and I am going to request piece " + pieceIndex + " from " + neighborPeerID);
+					
+					//String pieceIndexString = i + "";										//probably a better way to do this, but I just converted int to string to byte array
+					//pieceIndex = pieceIndexString.getBytes("US-ASCII");
+					
+					pieceIndex = ByteBuffer.allocate(4).putInt(i).array();
+					
+					clients.get(neighborPeerID).sendRequest(pieceIndex);				//Neighbor peer has a piece that I don't have!
+					return;
+				}
+			}
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		/*
 		try
 		{
 			for(int i = 0; i < neighborBitfieldString.length(); i++)
@@ -399,7 +458,7 @@ public class Peer {
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 		
 		
 	}
