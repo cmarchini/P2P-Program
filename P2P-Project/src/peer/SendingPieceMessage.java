@@ -15,14 +15,13 @@ public class SendingPieceMessage extends NormalMessage {
 	protected int pieceIndex;
 	protected File file;
 
-	public SendingPieceMessage(int pieceSize, int pieceIndex, String filename) {
+	public SendingPieceMessage(int pieceSize, int pieceIndex, String filename, int fileSize) {
 		super(0, 7);
 		
 		this.pieceIndex = pieceIndex;
 		this.offset = pieceSize*pieceIndex;
 		this.file = new File(filename);
 		
-		long fileSize = file.length();
 		int lengthOfPiece = (int)Math.min(pieceSize, fileSize - offset); // length = min(pieceSize, remaining bytes in file)
 		if (lengthOfPiece <= 0) throw new RuntimeException("Oops, nonpositive piece length");
 		int lengthOfPayload = lengthOfPiece + ADDITIONAL_LENGTH;

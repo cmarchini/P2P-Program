@@ -13,8 +13,11 @@ public class Peer {
 	Map<Integer, Client> clients = new HashMap<Integer, Client>();
 	int peerID;
 	int pieces = 5;
-	int hasFile = 0;     //Equal to 1 if peer has all pieces of file
+	boolean hasFile;     //Equal to 1 if peer has all pieces of file
+	int fileSize = 167513;
 	int serverPort;
+	
+	byte[] myBitfield;
 
 	//configuration variables
 	int numberOfPreferredNeighbors = 1;
@@ -23,13 +26,17 @@ public class Peer {
 	String fileName = "alice.dat";
 	int pieceSize = 32768;
 	
-	String filePath;
-	
 	int currentNumberOfPreferredNeighbors = 0;
 	
 	//interested
 	List<Integer> interestedClients = new ArrayList<Integer>();
 	List<Integer> unchokedClients = new ArrayList<Integer>();
+	
+	// file path
+	String filePath;
+	
+	// number of bits in bitfield
+	long numPieces;
 	
 	//The bitfields for all neighbor peers
 	Map<Integer, byte[]> bitfields = new HashMap<Integer, byte[]>();
@@ -51,11 +58,23 @@ public class Peer {
 	public Peer(int peerID) {
 		this.peerID = peerID;
 		
-		filePath = "peer_" + peerID + "/" + fileName;
+		initialize();
+	}
+
+	public Peer() {
+		// HARDCODE STUFF HERE
+		this.peerID = 1003;
+		int hasFileInt = 0;
+		
+		hasFile = (hasFileInt == 1);
+		
+		initialize();
 	}
 	
-	public Peer() {
-		this(1003);
+	// called inside every constructor
+	public void initialize() {
+		filePath = "peer_" + peerID + "/" + fileName;
+		generateBitfield();
 	}
 	
 	public void start() {
@@ -142,7 +161,7 @@ public class Peer {
 			
 			//get the index for the byte to shift and the bit for the index of the bit
 			int byteIndex = bitToSet / 8;
-			int bitIndex = (bitToSet % 8); //subtracting from seven because high bits are low bits in the bitfield
+			int bitIndex = (bitToSet % 8);
 			
 			System.out.println("The byte I'm going to set from the array is " + byteIndex);
 			
@@ -151,7 +170,7 @@ public class Peer {
 			System.out.println("The byte contains: " + b);
 			
 			//set the bit in the byte
-			b = (byte) (b | (byte) (1 << bitIndex));
+			b = (byte) (b | (byte) (0b1000000 >> bitIndex));
 			
 			bitField[byteIndex] = b;
 			
@@ -161,8 +180,18 @@ public class Peer {
 		else if(m.getType() == 5)		//received bitfield: now I want to determine if I am interested in that peer
 		{
 			System.out.println("I am Peer " + peerID + " and I just received a Bitfield message from Peer " + neighborPeerID + ".  I will determine if they have any interesting pieces.");
-			bitfields.put(neighborPeerID, m.getPayload());
-			determineInterest(neighborPeerID, m.getPayload());
+
+			byte[] bitfield = m.getPayload();
+			System.out.println("For example, the first byte is " + bitfield[0] + " and the last byte is " + bitfield[bitfield.length-1]);
+
+			// just in case - because this is assumed later and errors might happen otherwise
+			if (bitfield.length != myBitfield.length) {
+				System.out.println("Payload size was " + bitfield.length + " but bitfield length is supposed to be " + myBitfield.length);
+				return;
+			}
+			
+			bitfields.put(neighborPeerID, bitfield);
+			determineInterest(neighborPeerID, bitfield);
 		}
 		else if(m.getType() == 6)		//received request: now I will send the requested piece
 		{
@@ -182,9 +211,10 @@ public class Peer {
 			
 			System.out.println("Oh wow, look at this piece index I got from Peer " + neighborPeerID + ": " + rpm.getPieceIndex());
 			
-			// TODO
+			// update the bitfields
+			updateMyBitfield(rpm.getPieceIndex(), true);
 			
-			// should we update the bitfields?
+			// send have message
 			
 			// Is this what is supposed to happen next?
 			// 			determineRequests(neighborPeerID);
@@ -198,7 +228,7 @@ public class Peer {
 	//Type 0/1: choke methods
 	public void determineChoking(int neighborPeerID)
 	{
-		if(hasFile == 1)		//if peer has all pieces, then it chooses neighbor peers to unchoke/choke randomly
+		if(hasFile)		//if peer has all pieces, then it chooses neighbor peers to unchoke/choke randomly
 		{
 			while(interestedClients.size() > 0 && unchokedClients.size() < numberOfPreferredNeighbors)
 			{
@@ -223,18 +253,16 @@ public class Peer {
 	//Type 2/3: interest methods
 	public void determineInterest(int neighborPeerID, byte[] neighborBitfield)	//determine interest based upon neighbor's bitfield
 	{
-		if(hasFile != 1)														//if peer already has all the pieces, don't even bother checking neighbor's bitfield
+		if(!hasFile)														//if peer already has all the pieces, don't even bother checking neighbor's bitfield
 		{
-			byte[] myBitfield = generateBitfield();
+			//byte[] myBitfield = generateBitfield();
 			
-			String neighborBitfieldString = new String(neighborBitfield);
-			String myBitfieldString = new String(myBitfield);
-			
-			for(int i = 0; i < neighborBitfieldString.length(); i++)
+			for(int i = 0; i < numPieces; i++)
 			{
-				if(myBitfieldString.charAt(i) == '0')
+				System.out.println("I have the piece: " + hasPiece(myBitfield, i) + ". My neighbor has the piece : " + hasPiece(neighborBitfield, i));
+				if(hasPiece(neighborBitfield, i))
 				{
-					if(neighborBitfieldString.charAt(i) == '1')
+					if(!hasPiece(myBitfield, i))
 					{
 						System.out.println("I am Peer " + peerID + " and I am interested in " + neighborPeerID);
 						clients.get(neighborPeerID).sendInterested();				//Neighbor peer has a piece that I don't have!
@@ -248,8 +276,37 @@ public class Peer {
 		clients.get(neighborPeerID).sendNotInterested();							//I already have all the pieces that this neighbor has
 	}
 	//Type 5: bitfield methods
-	public byte[] generateBitfield()
+	public void generateBitfield()
 	{
+		if (hasFile) System.out.println("I have the file");
+		else System.out.println("I don't have the file");
+		System.out.println("The file size is " + fileSize);
+		
+		long size;
+		File file = new File(filePath);
+		size = fileSize / pieceSize;
+
+		System.out.println("The number of pieces (bits in the bitfield) is " + size);
+
+		byte[] bitfield = new byte[(int)((size-1)/8+1)]; // size/8, rounded up
+		System.out.println("The bitfield size is " + bitfield.length);
+		
+		int extra = (int)(7-((size-1)%8)); // extra bits being stored not corresponding to file
+		byte repeatedByte = hasFile ? (byte)0xFF : (byte)0x00;
+		byte extraByte = (byte)((hasFile ? 0xFF : 0x00) << extra);
+		
+		for (int i=0; i<bitfield.length-1; i++) {
+			bitfield[i] = repeatedByte;
+		}
+		
+		System.out.println("The bitfield is filled with bytes " + repeatedByte);
+
+		bitfield[bitfield.length-1] = extraByte;
+		
+		System.out.println("The bitfield has the last byte " + bitfield[bitfield.length - 1]);
+		
+		
+		/*
 		byte[] bitfield = {};
 		String bitfieldString = "";
 
@@ -270,19 +327,50 @@ public class Peer {
 			}
 			
 			bitfield = bitfieldString.getBytes("US-ASCII");
+			
 		} 
 		catch (Exception e) 
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-
-		return bitfield;
+		}*/
+		
+		numPieces = size;
+		myBitfield = bitfield;
 	}
+	
+	public void updateMyBitfield(int pieceIndex, boolean bit) {
+		System.out.println("Updating my own bitfield");
+		System.out.println("I need to set the bit number: " + pieceIndex);
+		
+		int byteIndex = pieceIndex / 8;
+		int bitIndex = (pieceIndex % 8); //subtracting from seven because high bits are low bits in the bitfield
+		
+		System.out.println("The byte I'm going to set from the array is " + byteIndex);
+		
+		byte b = myBitfield[byteIndex];
+		
+		System.out.println("The byte contains: " + b);
+		
+		//set the bit in the byte
+		byte bitPosition = (byte)(0b1000_0000 >>> bitIndex); // 10000000 for first bit in segment, 00000001 for last
+		b = (byte)((b & ~bitPosition) | (bit ? 0xFF : 0x00 & bitPosition));
+		
+		myBitfield[byteIndex] = b;
+		
+		System.out.println("The byte is now: " + myBitfield[byteIndex]);
+	}
+	
+	public boolean hasPiece(byte[] bitfield, int pieceIndex) {
+		byte bitPosition = (byte)(0b1000_0000 >>> pieceIndex % 8); // 10000000 for first bit in segment, 00000001 for last
+		
+		return (bitfield[pieceIndex/8] & bitPosition) != 0;
+	}
+	
 	//Type 6: request methods
 	public void determineRequests(int neighborPeerID)
 	{
-		byte[] myBitfield = generateBitfield();
+		//byte[] myBitfield = generateBitfield();
 		byte[] neighborBitfield = bitfields.get(neighborPeerID);
 		
 		String neighborBitfieldString = new String(neighborBitfield);

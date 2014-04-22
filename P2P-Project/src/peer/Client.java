@@ -149,7 +149,7 @@ public class Client implements Runnable
 	}
 	public void sendBitfield()
 	{
-		byte[] bitfield = peer.generateBitfield();
+		byte[] bitfield = peer.myBitfield;
 		sendMessage(new NormalMessage(bitfield.length + 1,5,bitfield));
 	}
 	public void sendRequest(byte[] pieceIndex)
@@ -158,7 +158,7 @@ public class Client implements Runnable
 	}
 	public void sendPiece(String filename, int index)
 	{		
-		sendMessage(new SendingPieceMessage(peer.pieceSize, index, filename));
+		sendMessage(new SendingPieceMessage(peer.pieceSize, index, filename, peer.fileSize));
 	}
 	
 	//Sends any type of message to a peer
