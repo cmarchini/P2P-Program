@@ -1,2 +1,6 @@
 # ignore compiled java files
 /P2P-Project/bin/*
+!/P2P-Project/bin/peer/RemotePeerInfo.class
+!/P2P-Project/bin/peer/StartRemotePeers.class
+!/P2P-Project/bin/peer/PeerInfo.cfg
+!/P2P-Project/bin/peer/peer_*
