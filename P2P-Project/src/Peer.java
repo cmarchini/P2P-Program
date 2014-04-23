@@ -100,8 +100,8 @@ public class Peer {
 
 	public Peer() {
 		// HARDCODE STUFF HERE
-		this.peerID = 1001;
-		int hasFileInt = 1;
+		this.peerID = 1003;
+		int hasFileInt = 0;
 		
 		hasFile = (hasFileInt == 1);
 		/*
