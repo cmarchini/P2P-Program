@@ -256,6 +256,16 @@ public class Peer {
 			updateMyBitfield(rpm.getPieceIndex(), true);
 			determineRequests(neighborPeerID);
 			
+			if(piecesReceived.get(neighborPeerID) == null)
+			{
+				piecesReceived.put(neighborPeerID, 1);
+			}
+			else
+			{
+				int received = piecesReceived.get(neighborPeerID);
+				piecesReceived.put(neighborPeerID, ++received);
+			}
+			
 			// send have message
 			for(int nPeerID : clients.keySet())
 			{
