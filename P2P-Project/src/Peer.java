@@ -165,6 +165,7 @@ public class Peer {
 	public void initialize() {
 		filePath = "peer_" + peerID + "/" + fileName;
 		generateBitfield();
+		createDirectory();
 	}
 	
 	public void start() {
@@ -596,5 +597,11 @@ public class Peer {
 
 	}
 	
-
+	public void createDirectory() {
+		File folder = new File("peer_" + peerID);
+		if (!folder.exists()) {
+			boolean created = folder.mkdir();
+			if (created) System.out.println("I am Peer " + peerID + "; Folder created for this peer: " + "peer_" + peerID);
+		}
+	}
 }
