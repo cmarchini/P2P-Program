@@ -38,6 +38,8 @@ public class Peer {
 	//int pieceSize = 32768;
 	int pieceSize = 10000;
 	
+	int pieceCount = 0;
+	
 	int currentNumberOfPreferredNeighbors = 0;
 	
 	//interested
@@ -64,23 +66,7 @@ public class Peer {
 			
 		}
         
-        try {  
-              
-            // This block configure the logger with handler and formatter  
-            fh = new FileHandler("MyLogFile.log");  
-            LOGGER.addHandler(fh);  
-            //logger.setLevel(Level.ALL);  
-            SimpleFormatter formatter = new SimpleFormatter();  
-            fh.setFormatter(formatter);  
-              
-            // the following statement is used to log any messages  
-            LOGGER.info("My first log");  
-              
-        } catch (SecurityException e) {  
-            e.printStackTrace();  
-        } catch (IOException e) {  
-            e.printStackTrace();  
-        }  
+        
           
 		
 		// if we got to this point a legal port was not specified
@@ -110,6 +96,24 @@ public class Peer {
 		        , 
 		        0,5000 
 		);*/
+		
+		try {  
+            // This block configure the logger with handler and formatter  
+            fh = new FileHandler("log_peer_" + this.peerID + ".log");  
+            LOGGER.addHandler(fh);  
+            //logger.setLevel(Level.ALL);  
+            SimpleFormatter formatter = new SimpleFormatter();  
+            fh.setFormatter(formatter);  
+              
+            // the following statement is used to log any messages  
+            LOGGER.info("Initializing logger.");  
+              
+        } catch (SecurityException e) {  
+            e.printStackTrace();  
+        } catch (IOException e) {  
+            e.printStackTrace();  
+        }  
+		
 		
 		new java.util.Timer().schedule( 
 		        new java.util.TimerTask() {
@@ -142,6 +146,11 @@ public class Peer {
 	public void initialize() {
 		filePath = "peer_" + peerID + "/" + fileName;
 		generateBitfield();
+	}
+	
+	public void writeLog(String message)
+	{
+		LOGGER.info(message);
 	}
 	
 	public void start() {
@@ -195,22 +204,23 @@ public class Peer {
 		if(m.getType() == 0)			//received choke:
 		{
 			System.out.println("I am Peer " + peerID + " and I just received an Choke message from Peer " + neighborPeerID);
+			this.writeLog("Peer " + this.peerID + " is choked by " + neighborPeerID);
 		}
 		else if(m.getType() == 1)		//received unchoke: now I can send request messages to this neighbor for each piece that I need
 		{
+			this.writeLog("Peer " + this.peerID + " is unchoked by " + neighborPeerID);
 			System.out.println("I am Peer " + peerID + " and I just received an Unchoke message from Peer " + neighborPeerID);
 			determineRequests(neighborPeerID);
 		}
 		else if(m.getType() == 2)		//received interested: now I want to determine if I want to choke or unchoke that peer
 		{
-			System.out.println("I am Peer " + peerID + " and I just received an Interested message from Peer " + neighborPeerID);
+			System.out.println("I am Peer " + peerID + " and I just received an 'interested' message from Peer " + neighborPeerID);
+			this.writeLog("Peer " + this.peerID + " received an 'interested' message from " + neighborPeerID);
 			interestedClients.add(neighborPeerID);
-			//determineChoking(neighborPeerID);
-
 		}
 		else if(m.getType() == 3)		//not interested
 		{
-			//TODO: not interested
+			this.writeLog("Peer " + this.peerID + " received an 'not interested' message from " + neighborPeerID);
 			System.out.println("I am Peer " + peerID + " and I just received a Not Interested message from Peer " + neighborPeerID);
 			if(interestedClients.size() > 0 && interestedClients.get(neighborPeerID) != null)
 			{
@@ -220,7 +230,7 @@ public class Peer {
 		else if(m.getType() == 4)		//have
 		{
 			System.out.println("I am Peer " + peerID + " and I just received a Have message from Peer " + neighborPeerID + ".  I will mark my bitfield with the piece they now have.");
-			
+			this.writeLog("Peer " + this.peerID + " received a 'have' message from " + neighborPeerID);
 			//retrieve the bitfield to manipulate
 			byte[] bitField = bitfields.get(neighborPeerID);
 			
@@ -290,8 +300,12 @@ public class Peer {
 			
 			// update the bitfields
 			updateMyBitfield(rpm.getPieceIndex(), true);
+			//log the number of pieces
+			writeLog("Peer " + this.peerID + " has downloaded the piece " + rpm.getPieceIndex() + " from " + neighborPeerID + ". Now the number of pieces it has is " + pieceCount + ".");
+			
 			determineRequests(neighborPeerID);
 			
+			//piecesReceived is for tracking upload speed for preferredPeer calculation
 			if(piecesReceived.get(neighborPeerID) == null)
 			{
 				piecesReceived.put(neighborPeerID, 1);
@@ -385,6 +399,18 @@ public class Peer {
 			}
 		}
 		
+		//log the selected peers
+		String log = "Peer " + this.peerID + " has the preferred neighbors ";
+		for(int i = 0; i < unchokedClients.size(); i++)
+		{
+			log.concat(unchokedClients.get(i).toString());
+			if(i != unchokedClients.size() - 1)
+			{
+				log.concat(", ");
+			}
+		}
+		this.writeLog(log);
+		
 		// choke all of the remaining interested clients
 		for(int i = 0; i < interestedClients.size(); i++)
 		{
@@ -420,6 +446,8 @@ public class Peer {
 				clients.get(interestedClients.get(i)).sendChoke();
 			}
 		}
+		
+		this.writeLog("Peer " + this.peerID + " has the optimistically unchoked neighbor " + optimisticUnchokedClient);
 	}
 	
 	
@@ -516,6 +544,7 @@ public class Peer {
 			System.out.println("Byte " + byteIndex + ": bit " + i + " is set: " + ((myBitfield[byteIndex] >> (7-i) & 1) == 1));
 		}
 		
+		pieceCount = 0;
 		
 		System.out.println("Let's see if I have all of the pieces yet");
 		for(int i = 0; i < numPieces; i++)
@@ -523,11 +552,18 @@ public class Peer {
 			if(!hasPiece(myBitfield, i))
 			{
 				System.out.println("I still need more pieces");
-				return;
+			}
+			else
+			{
+				pieceCount++;
 			}
 		}
 		System.out.println("I have all the pieces!");
-		hasFile = true;
+		if(pieceCount == numPieces)
+		{
+			writeLog("Peer " + peerID + " has downloaded the complete file.");
+			hasFile = true;
+		}
 	}
 	
 	public boolean hasPiece(byte[] bitfield, int pieceIndex) {

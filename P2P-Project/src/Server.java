@@ -85,6 +85,8 @@ class ServerConnection implements Runnable {
 		this.server = server;
 		this.myPeerID = peerID;
 		this.peer = peer;
+		
+		peer.writeLog("Peer " + this.myPeerID + " is connected from Peer " + id);
 		System.out.println( "I am Peer " + myPeerID + " and a new client has just connected to my server.  Connection " + id + " established with: " + clientSocket );
 		try {
 			// is = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));

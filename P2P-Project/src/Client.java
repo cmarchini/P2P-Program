@@ -65,6 +65,8 @@ public class Client implements Runnable
 				tryToConnect = false;
 			}
 		}
+		
+		peer.writeLog("Peer " + this.myPeerID + " makes a connection to Peer " + this.neighborPeerID);
 
 		//try {
 			handshake(); // If I got to this point, then I have connected to the neighbor peer.  I will send a handshake to that peer.  Attach my peerID so the peer knows who I am.
