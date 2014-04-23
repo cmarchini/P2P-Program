@@ -9,8 +9,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
+import java.io.IOException;  
+import java.util.logging.FileHandler;  
+import java.util.logging.Level;  
+import java.util.logging.Logger;  
+import java.util.logging.SimpleFormatter; 
 
 public class Peer {
+	// assumes the current class is called logger
+	private final static Logger LOGGER = Logger.getLogger("MyLog"); 
+	private static FileHandler fh;
+	
 	Map<Integer, Client> clients = new HashMap<Integer, Client>();
 	Map<Integer, Integer> piecesReceived = new HashMap<Integer, Integer>();
 	int peerID;
@@ -54,6 +63,25 @@ public class Peer {
 		} catch (NumberFormatException e) {
 			
 		}
+        
+        try {  
+              
+            // This block configure the logger with handler and formatter  
+            fh = new FileHandler("MyLogFile.log");  
+            LOGGER.addHandler(fh);  
+            //logger.setLevel(Level.ALL);  
+            SimpleFormatter formatter = new SimpleFormatter();  
+            fh.setFormatter(formatter);  
+              
+            // the following statement is used to log any messages  
+            LOGGER.info("My first log");  
+              
+        } catch (SecurityException e) {  
+            e.printStackTrace();  
+        } catch (IOException e) {  
+            e.printStackTrace();  
+        }  
+          
 		
 		// if we got to this point a legal port was not specified
 		new Peer().start();
