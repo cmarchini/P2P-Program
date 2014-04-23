@@ -263,7 +263,10 @@ public class Peer {
 				//System.out.println(clients.get(i).getNeighborPeerID() + " <----neighborpeerid  bitfield-----------> " + bitfields.get(clients.get(i).getNeighborPeerID()));
 				
 				if( bitfields.get(clients.get(nPeerID).getNeighborPeerID()) != null)
+				{
 						determineInterest(clients.get(nPeerID).getNeighborPeerID(), bitfields.get(clients.get(nPeerID).getNeighborPeerID()));
+						//clients.get(neighborPeerID).sendHave();
+				}
 			}
 			
 			// Is this what is supposed to happen next?
