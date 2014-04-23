@@ -73,69 +73,21 @@ public class Peer {
 	}
 
 	public Peer(int peerID) {
-		try 
-		{
-			Scanner in = new Scanner(new FileReader("Common.cfg"));
-
-				in.next();
-				numberOfPreferredNeighbors = in.nextInt();
-				if(in.hasNextLine()) in.next();
-				unchokingInterval = in.nextInt();
-				if(in.hasNextLine()) in.next();
-				optimisticUnchokingInterval = in.nextInt();
-				if(in.hasNextLine()) in.next();
-				fileName = in.next();
-				if(in.hasNextLine()) in.next();
-				pieceSize = in.nextInt();
-
-				System.out.println("this is the setting of: " + unchokingInterval);
-		} 
-		catch (FileNotFoundException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 		this.peerID = peerID;
-		
-		readInPeerInfo();
-		
-		/*
-		new java.util.Timer().schedule( 
-		        new MyTimerTask("" + peerID) 
-		        , 
-		        0,5000 
-		);*/
-		
-		new java.util.Timer().schedule( 
-		        new java.util.TimerTask() {
-		            @Override
-		            public void run() {
-		            	System.out.println("This is happening every 5 seconds");
-		               determineChoking();
-		            }
-		        },
-		        0,
-		        unchokingInterval * 1000
-			);
-			
-			new java.util.Timer().schedule( 
-		        new java.util.TimerTask() {
-		            @Override	            
-		            public void run() {
-		            	System.out.println("This is happening every 15 seconds");
-		               determineOptimisticUnchoking();
-		            }
-		        },
-		        0,
-		        optimisticUnchokingInterval *1000
-			);
 		
 		initialize();
 	}
 
 	public Peer() {
+		// HARDCODE STUFF HERE
+		this.peerID = 1003;
 		
+		initialize();
+	}
+	
+	// called inside every constructor
+	public void initialize() {
+
 		try 
 		{
 			Scanner in = new Scanner(new FileReader("Common.cfg"));
@@ -160,9 +112,6 @@ public class Peer {
 		}
 		
 
-		
-		// HARDCODE STUFF HERE
-		this.peerID = 1001;
 		
 		readInPeerInfo();
 		
@@ -215,9 +164,11 @@ public class Peer {
 		        optimisticUnchokingInterval *1000
 			);
 		
-		initialize();
+		filePath = "peer_" + peerID + "/" + fileName;
+		generateBitfield();
+		createDirectory();
 	}
-	
+
 	public void readInPeerInfo()
 	{
 		try 
@@ -253,13 +204,6 @@ public class Peer {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-	
-	// called inside every constructor
-	public void initialize() {
-		filePath = "peer_" + peerID + "/" + fileName;
-		generateBitfield();
-		createDirectory();
 	}
 	
 	public void writeLog(String message)
