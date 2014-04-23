@@ -26,7 +26,8 @@ public class Peer {
 	int unchokingInterval = 5000;
 	int optimisticUnchokingInterval = 15000;
 	String fileName = "alice.dat";
-	int pieceSize = 32768;
+	//int pieceSize = 32768;
+	int pieceSize = 10000;
 	
 	int currentNumberOfPreferredNeighbors = 0;
 	
@@ -253,11 +254,28 @@ public class Peer {
 			
 			// update the bitfields
 			updateMyBitfield(rpm.getPieceIndex(), true);
+			determineRequests(neighborPeerID);
 			
 			// send have message
+			for(int nPeerID : clients.keySet())
+			{
+				System.out.println(clients.get(nPeerID).getNeighborPeerID());
+				//System.out.println(clients.get(i).getNeighborPeerID() + " <----neighborpeerid  bitfield-----------> " + bitfields.get(clients.get(i).getNeighborPeerID()));
+				
+				if( bitfields.get(clients.get(nPeerID).getNeighborPeerID()) != null)
+						determineInterest(clients.get(nPeerID).getNeighborPeerID(), bitfields.get(clients.get(nPeerID).getNeighborPeerID()));
+			}
 			
 			// Is this what is supposed to happen next?
 			// 			determineRequests(neighborPeerID);
+			
+			//redetermine interest in all peers
+			//for(int i = 0; i < clients.size(); i++)
+			//{
+			//	System.out.println(clients.get(i).getNeighborPeerID() + " <----neighborpeerid  bitfield-----------> " + bitfields.get(clients.get(i).getNeighborPeerID()));
+			//	determineInterest(clients.get(i).getNeighborPeerID(), bitfields.get(clients.get(i).getNeighborPeerID()));
+			//}
+			
 		}
 		else
 		{
@@ -389,6 +407,10 @@ public class Peer {
 		long size;
 		File file = new File(filePath);
 		size = fileSize / pieceSize;
+		if(fileSize % pieceSize > 0)		//if you have 5 full pieces, and then a partial piece, that means you got 6 pieces.
+		{
+			size += 1;
+		}
 
 		System.out.println("The number of pieces (bits in the bitfield) is " + size);
 
@@ -408,37 +430,7 @@ public class Peer {
 		bitfield[bitfield.length-1] = extraByte;
 		
 		System.out.println("The bitfield has the last byte " + bitfield[bitfield.length - 1]);
-		
-		
-		/*
-		byte[] bitfield = {};
-		String bitfieldString = "";
-
-		try 
-		{
-			for(int i = 1; i <= pieces; i++)
-			{
-				File f = new File("peer_" + peerID + "/output_" + i + ".dat");
-				if(f.exists() && !f.isDirectory())
-				{
-					bitfieldString += "1";
-				}
-				else
-				{
-					bitfieldString += "0";
-					
-				}
-			}
 			
-			bitfield = bitfieldString.getBytes("US-ASCII");
-			
-		} 
-		catch (Exception e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-		
 		numPieces = size;
 		myBitfield = bitfield;
 	}
@@ -457,12 +449,32 @@ public class Peer {
 		System.out.println("The byte contains: " + b);
 		
 		//set the bit in the byte
-		byte bitPosition = (byte)(0b1000_0000 >>> bitIndex); // 10000000 for first bit in segment, 00000001 for last
-		b = (byte)((b & ~bitPosition) | (bit ? 0xFF : 0x00 & bitPosition));
+		//byte bitPosition = (byte)(0b1000_0000 >>> bitIndex); // 10000000 for first bit in segment, 00000001 for last
+		//b = (byte)((b & ~bitPosition) | (bit ? 0xFF : 0x00 & bitPosition));
+		//myBitfield[byteIndex] = b;
 		
-		myBitfield[byteIndex] = b;
+		myBitfield[byteIndex] |= (1 << (7-bitIndex));
 		
 		System.out.println("The byte is now: " + myBitfield[byteIndex]);
+		
+		
+		for(int i =0; i < 8; i++)
+		{
+			System.out.println("Byte " + byteIndex + ": bit " + i + " is set: " + ((myBitfield[byteIndex] >> (7-i) & 1) == 1));
+		}
+		
+		
+		System.out.println("Let's see if I have all of the pieces yet");
+		for(int i = 0; i < numPieces; i++)
+		{
+			if(!hasPiece(myBitfield, i))
+			{
+				System.out.println("I still need more pieces");
+				return;
+			}
+		}
+		System.out.println("I have all the pieces!");
+		hasFile = true;
 	}
 	
 	public boolean hasPiece(byte[] bitfield, int pieceIndex) {
@@ -474,29 +486,18 @@ public class Peer {
 	//Type 6: request methods
 	public void determineRequests(int neighborPeerID)
 	{
-		//byte[] myBitfield = generateBitfield();
 		byte[] neighborBitfield = bitfields.get(neighborPeerID);
 		
-		//String neighborBitfieldString = new String(neighborBitfield);
-		//String myBitfieldString = new String(myBitfield);
-		
 		byte[]pieceIndex = new byte[4];
-
-		
-		
-		
 		
 		for(int i = 0; i < numPieces; i++)
 		{
-			//System.out.println("I have the piece: " + hasPiece(myBitfield, i) + ". My neighbor has the piece : " + hasPiece(neighborBitfield, i));
+			System.out.println("I have the piece: " + hasPiece(myBitfield, i) + ". My neighbor has the piece : " + hasPiece(neighborBitfield, i));
 			if(hasPiece(neighborBitfield, i))
 			{
 				if(!hasPiece(myBitfield, i))
 				{
 					System.out.println("I am Peer " + peerID + " and I am going to request piece " + pieceIndex + " from " + neighborPeerID);
-					
-					//String pieceIndexString = i + "";										//probably a better way to do this, but I just converted int to string to byte array
-					//pieceIndex = pieceIndexString.getBytes("US-ASCII");
 					
 					pieceIndex = ByteBuffer.allocate(4).putInt(i).array();
 					
@@ -505,42 +506,6 @@ public class Peer {
 				}
 			}
 		}
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		/*
-		try
-		{
-			for(int i = 0; i < neighborBitfieldString.length(); i++)
-			{
-				if(myBitfieldString.charAt(i) == '0')
-				{				
-					if(neighborBitfieldString.charAt(i) == '1')
-					{
-						System.out.println("I am Peer " + peerID + " and I am going to request piece " + i + " from " + neighborPeerID);
-						String pieceIndexString = i + "";										//probably a better way to do this, but I just converted int to string to byte array
-						pieceIndex = pieceIndexString.getBytes("US-ASCII");
-						clients.get(neighborPeerID).sendRequest(pieceIndex);
-						return;
-					}
-				}
-			}
-		}
-		catch (Exception e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-		
-		
 	}
 	public void request(int neighborPeerID, byte[] pieceIndex)
 	{
