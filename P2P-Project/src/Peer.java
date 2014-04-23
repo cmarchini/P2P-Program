@@ -31,12 +31,11 @@ public class Peer {
 	byte[] myBitfield;
 
 	//configuration variables
-	int numberOfPreferredNeighbors = 1;
-	int unchokingInterval = 5000;
-	int optimisticUnchokingInterval = 15000;
-	String fileName = "alice.dat";
-	//int pieceSize = 32768;
-	int pieceSize = 10000;
+	int numberOfPreferredNeighbors;
+	int unchokingInterval;
+	int optimisticUnchokingInterval;
+	String fileName;
+	int pieceSize;
 	
 	int currentNumberOfPreferredNeighbors = 0;
 	
@@ -99,9 +98,33 @@ public class Peer {
 	}
 
 	public Peer() {
+		
+		try 
+		{
+			Scanner in = new Scanner(new FileReader("Common.cfg"));
+
+				in.next();
+				numberOfPreferredNeighbors = in.nextInt();
+				if(in.hasNextLine()) in.next();
+				unchokingInterval = in.nextInt();
+				if(in.hasNextLine()) in.next();
+				optimisticUnchokingInterval = in.nextInt();
+				if(in.hasNextLine()) in.next();
+				fileName = in.next();
+				if(in.hasNextLine()) in.next();
+				pieceSize = in.nextInt();
+
+				System.out.println("this is the setting of: " + unchokingInterval);
+		} 
+		catch (FileNotFoundException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		// HARDCODE STUFF HERE
-		this.peerID = 1001;
-		int hasFileInt = 1;
+		this.peerID = 1003;
+		int hasFileInt = 0;
 		
 		hasFile = (hasFileInt == 1);
 		/*
@@ -120,7 +143,7 @@ public class Peer {
 		            }
 		        },
 		        0,
-		        unchokingInterval
+		        unchokingInterval * 1000
 			);
 			
 			new java.util.Timer().schedule( 
@@ -132,7 +155,7 @@ public class Peer {
 		            }
 		        },
 		        0,
-		        optimisticUnchokingInterval
+		        optimisticUnchokingInterval *1000
 			);
 		
 		initialize();
@@ -145,6 +168,9 @@ public class Peer {
 	}
 	
 	public void start() {
+		//read in common properties
+
+		
 		//have peer's clients connect to other peers' servers
 		try 
 		{
