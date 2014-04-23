@@ -73,12 +73,63 @@ public class Peer {
 	}
 
 	public Peer(int peerID) {
+		try 
+		{
+			Scanner in = new Scanner(new FileReader("Common.cfg"));
+
+				in.next();
+				numberOfPreferredNeighbors = in.nextInt();
+				if(in.hasNextLine()) in.next();
+				unchokingInterval = in.nextInt();
+				if(in.hasNextLine()) in.next();
+				optimisticUnchokingInterval = in.nextInt();
+				if(in.hasNextLine()) in.next();
+				fileName = in.next();
+				if(in.hasNextLine()) in.next();
+				pieceSize = in.nextInt();
+
+				System.out.println("this is the setting of: " + unchokingInterval);
+		} 
+		catch (FileNotFoundException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		this.peerID = peerID;
 		
+		readInPeerInfo();
 		
+		/*
+		new java.util.Timer().schedule( 
+		        new MyTimerTask("" + peerID) 
+		        , 
+		        0,5000 
+		);*/
 		
-		//MyTimerTask test = new MyTimerTask(peerID + "");
-		//test.run();
+		new java.util.Timer().schedule( 
+		        new java.util.TimerTask() {
+		            @Override
+		            public void run() {
+		            	System.out.println("This is happening every 5 seconds");
+		               determineChoking();
+		            }
+		        },
+		        0,
+		        unchokingInterval * 1000
+			);
+			
+			new java.util.Timer().schedule( 
+		        new java.util.TimerTask() {
+		            @Override	            
+		            public void run() {
+		            	System.out.println("This is happening every 15 seconds");
+		               determineOptimisticUnchoking();
+		            }
+		        },
+		        0,
+		        optimisticUnchokingInterval *1000
+			);
 		
 		initialize();
 	}
@@ -108,11 +159,13 @@ public class Peer {
 			e.printStackTrace();
 		}
 		
-		// HARDCODE STUFF HERE
-		this.peerID = 1003;
-		int hasFileInt = 0;
+
 		
-		hasFile = (hasFileInt == 1);
+		// HARDCODE STUFF HERE
+		this.peerID = 1001;
+		
+		readInPeerInfo();
+		
 		/*
 		new java.util.Timer().schedule( 
 		        new MyTimerTask("" + peerID) 
@@ -165,6 +218,43 @@ public class Peer {
 		initialize();
 	}
 	
+	public void readInPeerInfo()
+	{
+		try 
+		{
+			Scanner in = new Scanner(new FileReader("PeerInfo.cfg"));
+
+			while(in.hasNext())
+			{
+				int inPeerID = in.nextInt();
+				String neighborHostname = in.next();
+				int inPort = in.nextInt();
+				int hasFileInt = in.nextInt();
+				System.out.println(hasFileInt);
+				if(inPeerID != peerID)														//I have discovered one of my neighbors in the config file
+				{
+					Client newPeerClient = new Client(inPort, peerID, inPeerID, this, neighborHostname);
+					new Thread(newPeerClient).start();										
+
+					clients.put(inPeerID, newPeerClient);
+				}
+				else																		//I have discovered myself in the config file
+				{
+					serverPort = inPort;
+					hasFile = (hasFileInt == 1);
+				}
+			}
+			
+			System.out.println("I have the file: " + hasFile);
+
+		} 
+		catch (FileNotFoundException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	// called inside every constructor
 	public void initialize() {
 		filePath = "peer_" + peerID + "/" + fileName;
@@ -182,18 +272,20 @@ public class Peer {
 
 		
 		//have peer's clients connect to other peers' servers
-		try 
+		/*try 
 		{
 			Scanner in = new Scanner(new FileReader("PeerInfo.cfg"));
 
 			while(in.hasNext())
 			{
 				int inPeerID = in.nextInt();
-				in.next();
+				String neighborHostname = in.next();
 				int inPort = in.nextInt();
+				int hasFileInt = in.nextInt();
+				System.out.println(hasFileInt);
 				if(inPeerID != peerID)														//I have discovered one of my neighbors in the config file
 				{
-					Client newPeerClient = new Client(inPort, peerID, inPeerID, this);
+					Client newPeerClient = new Client(inPort, peerID, inPeerID, this, neighborHostname);
 					new Thread(newPeerClient).start();										
 
 					clients.put(inPeerID, newPeerClient);
@@ -201,16 +293,18 @@ public class Peer {
 				else																		//I have discovered myself in the config file
 				{
 					serverPort = inPort;
+					hasFile = (hasFileInt == 1);
 				}
-				in.next();
 			}
+			
+			System.out.println("I have the file: " + hasFile);
 
 		} 
 		catch (FileNotFoundException e) 
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 
 		//turn on peer's server
 		Server newPeerServer = new Server(serverPort, peerID, this);
