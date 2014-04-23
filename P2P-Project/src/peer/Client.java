@@ -1,6 +1,7 @@
 package peer;
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 
 public class Client implements Runnable
 {
@@ -148,9 +149,12 @@ public class Client implements Runnable
 	{
 		sendMessage(new NormalMessage(1,3));
 	}
-	public void sendHave()
+	public void sendHave(int pieceIndex)
 	{
-		sendMessage(new NormalMessage(1,4));
+		System.out.println("sendHave (int): " + pieceIndex);
+		byte[] pieceIndexInBytes =  ByteBuffer.allocate(4).putInt(pieceIndex).array();
+		System.out.println("sendHave (bytes): " + pieceIndexInBytes);
+		sendMessage(new NormalMessage(pieceIndexInBytes.length + 1,4, pieceIndexInBytes));
 	}
 	public void sendBitfield()
 	{

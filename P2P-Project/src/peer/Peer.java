@@ -62,27 +62,7 @@ public class Peer {
 	public Peer(int peerID) {
 		this.peerID = peerID;
 		
-		new java.util.Timer().schedule( 
-	        new java.util.TimerTask() {
-	            @Override
-	            public void run() {
-	               System.out.println(" this is called every 5 sec");
-	            }
-	        },
-	        0,
-	        unchokingInterval
-		);
 		
-		new java.util.Timer().schedule( 
-	        new java.util.TimerTask() {
-	            @Override	            
-	            public void run() {
-	               System.out.println(" this is called every 5 sec");
-	            }
-	        },
-	        0,
-	        optimisticUnchokingInterval
-		);
 		
 		//MyTimerTask test = new MyTimerTask(peerID + "");
 		//test.run();
@@ -92,8 +72,8 @@ public class Peer {
 
 	public Peer() {
 		// HARDCODE STUFF HERE
-		this.peerID = 1003;
-		int hasFileInt = 0;
+		this.peerID = 1001;
+		int hasFileInt = 1;
 		
 		hasFile = (hasFileInt == 1);
 		/*
@@ -102,6 +82,30 @@ public class Peer {
 		        , 
 		        0,5000 
 		);*/
+		
+		new java.util.Timer().schedule( 
+		        new java.util.TimerTask() {
+		            @Override
+		            public void run() {
+		            	System.out.println("This is happening every 5 seconds");
+		               determineChoking();
+		            }
+		        },
+		        0,
+		        unchokingInterval
+			);
+			
+			new java.util.Timer().schedule( 
+		        new java.util.TimerTask() {
+		            @Override	            
+		            public void run() {
+		            	System.out.println("This is happening every 15 seconds");
+		               determineOptimisticUnchoking();
+		            }
+		        },
+		        0,
+		        optimisticUnchokingInterval
+			);
 		
 		initialize();
 	}
@@ -180,7 +184,7 @@ public class Peer {
 		{
 			//TODO: not interested
 			System.out.println("I am Peer " + peerID + " and I just received a Not Interested message from Peer " + neighborPeerID);
-			interestedClients.remove(neighborPeerID);
+			//interestedClients.remove(neighborPeerID);
 		}
 		else if(m.getType() == 4)		//have
 		{
@@ -191,6 +195,7 @@ public class Peer {
 			
 			//get integer of bit to set to true
 			byte[] bytes = m.getPayload();
+			System.out.println(m.getPayload());
 			int bitToSet = java.nio.ByteBuffer.wrap(bytes).getInt();
 			
 			System.out.println("The bitfield contained: " + bitField.toString());
@@ -265,7 +270,7 @@ public class Peer {
 				if( bitfields.get(clients.get(nPeerID).getNeighborPeerID()) != null)
 				{
 						determineInterest(clients.get(nPeerID).getNeighborPeerID(), bitfields.get(clients.get(nPeerID).getNeighborPeerID()));
-						//clients.get(neighborPeerID).sendHave();
+						clients.get(neighborPeerID).sendHave(rpm.getPieceIndex());
 				}
 			}
 			
@@ -356,19 +361,23 @@ public class Peer {
 			interestedClients.add(optimisticUnchokedClient);
 		}
 		
-		Random rand = new Random();
-		int randPeer = rand.nextInt(interestedClients.size());
-		int newOptimisitcUnchokedClient = interestedClients.remove(randPeer);
-		
-		optimisticUnchokedClient = newOptimisitcUnchokedClient;
-		System.out.println("Peer " + peerID + " is unchoking Peer " + optimisticUnchokedClient);
-		clients.get(optimisticUnchokedClient).sendUnchoke();
-		
-		// choke all of the remaining interested clients
-		for(int i = 0; i < interestedClients.size(); i++)
+		if(interestedClients.size() > 0)
 		{
-			System.out.println("Peer " + peerID + " is choking Peer " + interestedClients.get(i));
-			clients.get(interestedClients.get(i)).sendChoke();
+		
+			Random rand = new Random();
+			int randPeer = rand.nextInt(interestedClients.size());
+			int newOptimisitcUnchokedClient = interestedClients.remove(randPeer);
+			
+			optimisticUnchokedClient = newOptimisitcUnchokedClient;
+			System.out.println("Peer " + peerID + " is unchoking Peer " + optimisticUnchokedClient);
+			clients.get(optimisticUnchokedClient).sendUnchoke();
+			
+			// choke all of the remaining interested clients
+			for(int i = 0; i < interestedClients.size(); i++)
+			{
+				System.out.println("Peer " + peerID + " is choking Peer " + interestedClients.get(i));
+				clients.get(interestedClients.get(i)).sendChoke();
+			}
 		}
 	}
 	
