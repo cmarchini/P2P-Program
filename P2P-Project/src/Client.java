@@ -11,6 +11,7 @@ public class Client implements Runnable
 	private int neighborPeerID; 
 	private Mailbox mail;
 	Peer peer;
+	String hostname;
 	
 	private int handshake = 0; 			//When this variable equals 2, the handshake is complete
 
@@ -19,19 +20,17 @@ public class Client implements Runnable
 	DataOutputStream outputStream = null;
 	BufferedReader inputStream = null;
 	
-	public Client(int port, int myPeerID, int neighborPeerID, Peer peer)
+	public Client(int port, int myPeerID, int neighborPeerID, Peer peer, String hostname)
 	{
 		this.port = port;
 		this.myPeerID = myPeerID;
 		this.neighborPeerID = neighborPeerID;
 		this.peer = peer;
-		//this.mail = mail;
+		this.hostname = hostname;
 	}
 
 	public void run ()
 	{
-
-		String hostname = "localhost";
 		boolean tryToConnect = true;
 
 		boolean connected = false;
