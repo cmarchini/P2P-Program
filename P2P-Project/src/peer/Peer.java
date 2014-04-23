@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Scanner;
 
 public class Peer {
 	Map<Integer, Client> clients = new HashMap<Integer, Client>();
+	Map<Integer, Integer> piecesReceived = new HashMap<Integer, Integer>();
 	int peerID;
 	int pieces = 5;
 	boolean hasFile;     //Equal to 1 if peer has all pieces of file
@@ -21,8 +23,8 @@ public class Peer {
 
 	//configuration variables
 	int numberOfPreferredNeighbors = 1;
-	int unchokingInterval;
-	int optimisticUnchokingInterval;
+	int unchokingInterval = 5000;
+	int optimisticUnchokingInterval = 15000;
 	String fileName = "alice.dat";
 	int pieceSize = 32768;
 	
@@ -31,6 +33,7 @@ public class Peer {
 	//interested
 	List<Integer> interestedClients = new ArrayList<Integer>();
 	List<Integer> unchokedClients = new ArrayList<Integer>();
+	int optimisticUnchokedClient = -1;
 	
 	// file path
 	String filePath;
@@ -59,15 +62,25 @@ public class Peer {
 		this.peerID = peerID;
 		
 		new java.util.Timer().schedule( 
-		        new java.util.TimerTask() {
-		            @Override
-
-		            
-		            public void run() {
-		               System.out.println(" this is called every 5 sec");
-		            }
-		        }, 
-		        5000 
+	        new java.util.TimerTask() {
+	            @Override
+	            public void run() {
+	               System.out.println(" this is called every 5 sec");
+	            }
+	        },
+	        0,
+	        unchokingInterval
+		);
+		
+		new java.util.Timer().schedule( 
+	        new java.util.TimerTask() {
+	            @Override	            
+	            public void run() {
+	               System.out.println(" this is called every 5 sec");
+	            }
+	        },
+	        0,
+	        optimisticUnchokingInterval
 		);
 		
 		//MyTimerTask test = new MyTimerTask(peerID + "");
@@ -82,12 +95,12 @@ public class Peer {
 		int hasFileInt = 0;
 		
 		hasFile = (hasFileInt == 1);
-		
+		/*
 		new java.util.Timer().schedule( 
 		        new MyTimerTask("" + peerID) 
 		        , 
 		        0,5000 
-		);
+		);*/
 		
 		initialize();
 	}
@@ -142,6 +155,8 @@ public class Peer {
 		clients.get(msg.getPeerID()).incrementHandshake();
 	}
 	
+	//public void receivedPingMessage()
+	
 	//logic to handle a normal message received from another peer
 	public void receiveNormalMessage(int neighborPeerID, NormalMessage m){
 		if(m.getType() == 0)			//received choke:
@@ -157,13 +172,14 @@ public class Peer {
 		{
 			System.out.println("I am Peer " + peerID + " and I just received an Interested message from Peer " + neighborPeerID);
 			interestedClients.add(neighborPeerID);
-			determineChoking(neighborPeerID);
+			//determineChoking(neighborPeerID);
 
 		}
 		else if(m.getType() == 3)		//not interested
 		{
 			//TODO: not interested
 			System.out.println("I am Peer " + peerID + " and I just received a Not Interested message from Peer " + neighborPeerID);
+			interestedClients.remove(neighborPeerID);
 		}
 		else if(m.getType() == 4)		//have
 		{
@@ -248,32 +264,96 @@ public class Peer {
 			System.err.println("I am peer " + peerID + " and I just received a message of an invalid type!");
 		}
 	}
+	
+	
 
 	//Type 0/1: choke methods
-	public void determineChoking(int neighborPeerID)
+	public void determineChoking()
 	{
-		if(hasFile)		//if peer has all pieces, then it chooses neighbor peers to unchoke/choke randomly
+		//empty unchokedClients list by moving to interestedClients
+		interestedClients.addAll(unchokedClients);
+		unchokedClients.clear();
+		
+		if(hasFile || piecesReceived.size() == 0)		//if peer has all pieces, then it chooses neighbor peers to unchoke/choke randomly
 		{
-			while(interestedClients.size() > 0 && unchokedClients.size() < numberOfPreferredNeighbors)
+			while(interestedClients.size() > 0 && unchokedClients.size() <= numberOfPreferredNeighbors)
 			{
-				int newUnchokedClient = interestedClients.remove(0);
+				Random rand = new Random();
+				int randPeer = rand.nextInt(interestedClients.size());
+				int newUnchokedClient = interestedClients.remove(randPeer);
 				unchokedClients.add(newUnchokedClient);
 				System.out.println("Peer " + peerID + " is unchoking Peer " + newUnchokedClient);
 				clients.get(newUnchokedClient).sendUnchoke();
 			}
+		}
+		else  //does not have complete file
+		{
+			System.out.println("NOT YET IMPLEMENTED: I need to determine who is a preferred neighbor based upon their download speed");
 			
-			for(int i = 0; i < interestedClients.size(); i++)
+			while(interestedClients.size() > 0 && unchokedClients.size() <= numberOfPreferredNeighbors)
 			{
-				System.out.println("Peer " + peerID + " is choking Peer " + interestedClients.get(i));
-				clients.get(interestedClients.get(i)).sendChoke();
+				//get the largest value in piecesReceived HashMap
+				int bestPeer = 0;
+				int bestValue = -1;
+				
+				for (Map.Entry<Integer, Integer> entry : piecesReceived.entrySet()) {
+				    int thisPeerId = entry.getKey();
+				    int value = entry.getValue();
+				    
+				    if(value > bestValue) {
+				    	bestPeer = thisPeerId;
+				    }
+				}
+				
+				//add the peerID of that to the unchokedClients list
+				unchokedClients.add(bestPeer);
+				
+				//unchoke the client
+				System.out.println("Peer " + peerID + " is unchoking Peer " + bestPeer);
+				clients.get(bestPeer).sendUnchoke();
+				
+				//remove that peer ID from the piecesReceived HashMap and the interested clients
+				interestedClients.remove(bestPeer);
+				piecesReceived.remove(bestPeer);
 			}
 		}
-		else
+		
+		// choke all of the remaining interested clients
+		for(int i = 0; i < interestedClients.size(); i++)
 		{
-			//TODO: Determine who is a preferred neighbor based upon their download speed
-			System.out.println("NOT YET IMPLEMENTED: I need to determine who is a preferred neighbor based upon their download speed");
+			System.out.println("Peer " + peerID + " is choking Peer " + interestedClients.get(i));
+			clients.get(interestedClients.get(i)).sendChoke();
+		}
+		
+		piecesReceived.clear();
+	}
+	
+	public void determineOptimisticUnchoking()
+	{
+		if(optimisticUnchokedClient != -1)
+		{
+			interestedClients.add(optimisticUnchokedClient);
+		}
+		
+		Random rand = new Random();
+		int randPeer = rand.nextInt(interestedClients.size());
+		int newOptimisitcUnchokedClient = interestedClients.remove(randPeer);
+		
+		optimisticUnchokedClient = newOptimisitcUnchokedClient;
+		System.out.println("Peer " + peerID + " is unchoking Peer " + optimisticUnchokedClient);
+		clients.get(optimisticUnchokedClient).sendUnchoke();
+		
+		// choke all of the remaining interested clients
+		for(int i = 0; i < interestedClients.size(); i++)
+		{
+			System.out.println("Peer " + peerID + " is choking Peer " + interestedClients.get(i));
+			clients.get(interestedClients.get(i)).sendChoke();
 		}
 	}
+	
+	
+	
+	
 	//Type 2/3: interest methods
 	public void determineInterest(int neighborPeerID, byte[] neighborBitfield)	//determine interest based upon neighbor's bitfield
 	{
