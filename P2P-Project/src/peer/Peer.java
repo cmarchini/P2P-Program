@@ -212,7 +212,10 @@ public class Peer {
 		{
 			//TODO: not interested
 			System.out.println("I am Peer " + peerID + " and I just received a Not Interested message from Peer " + neighborPeerID);
-			//interestedClients.remove(neighborPeerID);
+			if(interestedClients.size() > 0 && interestedClients.get(neighborPeerID) != null)
+			{
+				interestedClients.remove(neighborPeerID);
+			}
 		}
 		else if(m.getType() == 4)		//have
 		{
